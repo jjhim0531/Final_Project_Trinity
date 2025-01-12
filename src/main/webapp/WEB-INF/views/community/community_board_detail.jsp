@@ -28,7 +28,7 @@
 			<!-- EL 데이터를 JavaScript 변수로 전달 -->
 			<script>
 				const contextPath = "${pageContext.servletContext.contextPath}";
-				const boardNo = "${b.boardNo}";
+				const communityNo = "${b.communityNo}";
 				const categoryId = "${b.categoryId}";  // categoryId 값을 JavaScript 변수로 전달
 				const loginUserNo = "${loginUser != null ? loginUser.userNo : b.hosAcNo}";
 				const loginUserId = "${loginUser != null ? loginUser.userId : b.hosName}";
@@ -60,13 +60,13 @@
 					<div class="navigation-buttons">
 						<!-- 왼쪽 섹션: 수정, 삭제 -->
 						<div class="left-section">
-							<c:if test="${loginUser != null && loginUser.userId eq b.boardWriter}">
+							<c:if test="${loginUser != null && loginUser.userId eq b.communityWriter}">
 								<!-- 수정 버튼 -->
 								<button class="white-button"
-									onclick="location.href='${pageContext.request.contextPath}/community/edit?bno=${b.boardNo}'">수정</button>
+									onclick="location.href='${pageContext.request.contextPath}/community/edit?bno=${b.communityNo}'">수정</button>
 								<!-- 삭제 버튼 -->
 								<button class="white-button"
-									onclick="deleteBoard('${b.boardNo}', '${b.categoryId}')">삭제</button>
+									onclick="deleteBoard('${b.communityNo}', '${b.categoryId}')">삭제</button>
 							</c:if>
 						</div>
 
@@ -81,7 +81,7 @@
 								<!-- 이전글 -->
 								<c:choose>
 									<c:when test="${prevBoard != null}">
-										<a href="${pageContext.request.contextPath}/community/boardDetail?bno=${prevBoard.boardNo}"
+										<a href="${pageContext.request.contextPath}/community/boardDetail?bno=${prevBoard.communityNo}"
 											class="nav-text">
 											&laquo; 이전글
 										</a>
@@ -90,7 +90,7 @@
 								<!-- 다음글 -->
 								<c:choose>
 									<c:when test="${nextBoard != null}">
-										<a href="${pageContext.request.contextPath}/community/boardDetail?bno=${nextBoard.boardNo}"
+										<a href="${pageContext.request.contextPath}/community/boardDetail?bno=${nextBoard.communityNo}"
 											class="nav-text">
 											다음글 &raquo;
 										</a>
@@ -123,15 +123,15 @@
 							</tr>
 
 							<tr>
-								<td class="board-title">${b.boardTitle}</td>
+								<td class="board-title">${b.communityTitle}</td>
 								<td class="board-user-info">
 									<span
-										class="${sessionScope.loginUser != null && sessionScope.loginUser.userId == b.boardWriter ? 'highlight-user' : ''}">
-										${b.boardWriter} </span>
+										class="${sessionScope.loginUser != null && sessionScope.loginUser.userId == b.communityWriter ? 'highlight-user' : ''}">
+										${b.communityWriter} </span>
 								</td>
 								<td class="board-meta">
 									<span>${b.enrollDate}</span> |
-									<span>조회 ${b.boardViews}</span>
+									<span>조회 ${b.communityViews}</span>
 								</td>
 							</tr>
 						</table>
@@ -139,7 +139,7 @@
 						<div class="board-content-wrapper">
 							<div class="board-content">
 								<!-- 게시글 내용 -->
-								${b.boardContent}
+								${b.communityContent}
 							</div>
 
 							<!-- 첨부파일 섹션 include -->
@@ -160,7 +160,7 @@
 
 										<!-- 답변 버튼 -->
 										<a class="round-button" href="#"
-											onclick="handleAnswerClick('${pageContext.request.contextPath}/community/medAnswer?bno=${b.boardNo}')">
+											onclick="handleAnswerClick('${pageContext.request.contextPath}/community/medAnswer?bno=${b.communityNo}')">
 											답변하기
 										</a>
 									</div>
@@ -190,7 +190,7 @@
 						</div>
 					</div>
 
-					<%@ include file="/WEB-INF/views/common/comments.jsp" %>
+					<%@ include file="/WEB-INF/views/boardCommon/comment.jsp" %>
 				</div>
 				<div class="empty-space"></div>
 			</main>

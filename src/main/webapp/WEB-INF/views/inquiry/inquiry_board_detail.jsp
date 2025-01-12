@@ -164,7 +164,7 @@
 
 					<!-- comments.jsp 조건부 포함 -->
 <c:if test="${categoryId == 'CAT05' || categoryId == 'CAT06'}">
-    <%@ include file="/WEB-INF/views/common/comments.jsp"%>
+    <%@ include file="/WEB-INF/views/boardCommon/comments.jsp"%>
 </c:if>
 
 				</div>

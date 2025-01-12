@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="communityMapper">
+
+	<!-- 게시글 ResultMap 정의 -->
+	<resultMap id="communityResult"
+		type="com.project.trinity.board.community.model.vo.Community">
+		<id property="communityNo" column="COMMUNITY_NO" />
+		<result property="communityTitle" column="COMMUNITY_TITLE" />
+		<result property="userNo" column="USER_NO" />
+		<result property="communityWriter" column="BOARD_WRITER" />
+		<result property="communityContent" column="COMMUNITY_CONTENT" />
+		<result property="enrollDate" column="ENROLL_DATE" />
+		<result property="modifiedDate" column="MODIFIED_DATE" />
+		<result property="communityViews" column="COMMUNITY_VIEWS" />
+		<result property="status" column="STATUS" />
+		<result property="categoryId" column="CATEGORY_ID" />
+		<result property="categoryName" column="CATEGORY_NAME" />
+		<result property="hosAcNo" column="HOS_ACCOUNT_NO" />
+		<result property="hosName" column="HOS_NAME" />
+
+		<collection property="fileList"
+			ofType="com.project.trinity.board.common.model.vo.BoardFile"
+			javaType="java.util.List">
+			<id property="fileNo" column="FILE_NO" />
+			<result property="originName" column="ORIGIN_NAME" />
+			<result property="changeName" column="CHANGE_NAME" />
+			<result property="allowDownload" column="ALLOW_DOWNLOAD" />
+			<result property="fileSize" column="FILE_SIZE" />
+		</collection>
+	</resultMap>
+
+
+
+	<!-- MedAnswer ResultMap 정의 -->
+	<resultMap id="medAnswerResult"
+		type="com.project.trinity.board.community.model.vo.MedAnswer">
+		<result property="answerNo" column="ANSWER_NO" />
+		<result property="communityNo" column="COMMUNITY_NO" />
+		<result property="userNo" column="USER_NO" />
+		<result property="answerContent" column="ANSWER_CONTENT" />
+		<result property="enrollDate" column="ENROLL_DATE"
+			jdbcType="DATE" />
+		<result property="modifiedDate" column="MODIFIED_DATE" />
+		<result property="status" column="STATUS" />
+		<result property="isMedicalField" column="IS_MEDICAL_FIELD" />
+		<result property="medicalFieldId" column="MEDICAL_FIELD_ID" />
+	</resultMap>
+
+
+	<select id="selectListByCategory" parameterType="map"
+		resultMap="communityResult">
+		SELECT *
+		FROM (
+		SELECT
+		HI.HOS_NAME,
+		B.HOS_ACCOUNT_NO,
+		b.COMMUNITY_NO,
+		b.COMMUNITY_TITLE,
+		b.COMMUNITY_VIEWS,
+		b.CATEGORY_ID,
+		bc.CATEGORY_NAME,
+		m.USER_NAME AS COMMUNITY_WRITER,
+		TO_CHAR(b.ENROLL_DATE, 'YYYY/MM/DD') AS ENROLL_DATE,
+		ROW_NUMBER() OVER (
+		ORDER BY
+		<choose>
+			<when test="sortType == '조회수'">
+				b.COMMUNITY_VIEWS DESC
+			</when>
+			<when test="sortType == '작성일'">
+				b.ENROLL_DATE DESC
+			</when>
+			<otherwise>
+				b.COMMUNITY_NO DESC
+			</otherwise>
+		</choose>
+		) AS RN
+		FROM COMMUNITY b
+		LEFT JOIN BOARD_CATEGORY bc ON b.CATEGORY_ID = bc.CATEGORY_ID
+		LEFT JOIN MEMBER m ON b.USER_NO = m.USER_NO
+		LEFT JOIN HOSPITAL_ACCOUNT HA ON HA.HOS_ACCOUNT_NO = B.HOS_ACCOUNT_NO
+		LEFT JOIN HOSPITAL_INFO HI ON HI.HOS_NO = HA.HOS_NO
+		WHERE b.STATUS = 'Y'
+		<if test="categoryId != null">
+			AND b.CATEGORY_ID = #{categoryId}
+		</if>
+		<if test="categoryId == null">
+			AND b.CATEGORY_ID IN ('CAT01', 'CAT02', 'CAT03') <!-- 자유게시판, 메디톡, 이벤트게시판 -->
+		</if>
+		) subquery
+		WHERE RN BETWEEN #{startRow} AND #{endRow}
+	</select>
+
+
+
+	<select id="getLatestBoardPosts" parameterType="string"
+		resultMap="communityResult">
+		SELECT *
+		FROM (
+		SELECT COMMUNITY_NO, COMMUNITY_TITLE,
+		TO_CHAR(ENROLL_DATE, 'YYYY-MM-DD') AS
+		ENROLL_DATE
+		FROM COMMUNITY
+		WHERE
+		CATEGORY_ID = #{categoryId} AND STATUS = 'Y'
+		ORDER BY ENROLL_DATE DESC
+		)
+		WHERE ROWNUM &lt;= 3
+	</select>
+
+
+	<select id="selectAllCategories"
+		resultType="com.project.trinity.board.common.model.vo.BoardCategory">
+		SELECT category_id AS categoryId, category_name AS
+		categoryName, sort_order
+		AS sortOrder, is_active AS isActive
+		FROM
+		board_category
+		WHERE is_active = 'Y'
+		ORDER BY sort_order
+	</select>
+
+	<!-- 게시글 총 갯수 조회 -->
+	<select id="selectListCount" resultType="int">
+		SELECT COUNT(*) FROM
+		COMMUNITY
+	</select>
+
+	<select id="getPreviousBoard" parameterType="String"
+		resultType="String">
+		SELECT COMMUNITY_NO
+		FROM (
+		SELECT COMMUNITY_NO
+		FROM COMMUNITY
+		WHERE
+		COMMUNITY_NO &lt; #{bno}
+		AND CATEGORY_ID = (SELECT CATEGORY_ID FROM COMMUNITY WHERE COMMUNITY_NO =
+		#{bno})
+		AND STATUS = 'Y'
+		ORDER BY COMMUNITY_NO DESC
+		)
+		WHERE
+		ROWNUM = 1
+	</select>
+
+	<select id="getNextBoard" parameterType="String"
+		resultType="String">
+		SELECT COMMUNITY_NO
+		FROM (
+		SELECT COMMUNITY_NO
+		FROM COMMUNITY
+		WHERE
+		COMMUNITY_NO &gt; #{bno}
+		AND CATEGORY_ID = (SELECT CATEGORY_ID FROM COMMUNITY WHERE COMMUNITY_NO =
+		#{bno})
+		AND STATUS = 'Y'
+		ORDER BY COMMUNITY_NO ASC
+		)
+		WHERE ROWNUM
+		= 1
+	</select>
+
+
+
+
+
+	<!-- 게시글 조회수 증가 -->
+	<update id="increaseCount">
+		UPDATE COMMUNITY
+		SET COMMUNITY_VIEWS =
+		TO_NUMBER(COMMUNITY_VIEWS)
+		+ 1
+		WHERE COMMUNITY_NO = #{bno}
+	</update>
+
+
+
+
+	<!-- 게시글 추가 -->
+	<insert id="insertBoard" parameterType="COMMUNITY">
+		<selectKey keyProperty="communityNo"
+			resultType="java.lang.String" order="BEFORE">
+			SELECT 'B' || TO_CHAR(SEQ_COMMUNITY_NO.NEXTVAL) FROM DUAL
+		</selectKey>
+		INSERT INTO COMMUNITY (
+		COMMUNITY_NO,
+		USER_NO,
+		COMMUNITY_TITLE,
+		COMMUNITY_CONTENT,
+		CATEGORY_ID
+		)
+		VALUES (
+		#{communityNo},
+		#{userNo},
+		#{communityTitle},
+		#{communityContent},
+		#{categoryId}
+		)
+	</insert>
+
+
+	<!-- 병원 이벤트 게시글 추가 -->
+	<insert id="insertBoardAC" parameterType="COMMUNITY">
+		INSERT INTO COMMUNITY (
+		HOS_ACCOUNT_NO,
+		COMMUNITY_TITLE,
+		COMMUNITY_CONTENT,
+		CATEGORY_ID
+		)
+		VALUES (
+		#{hosAcNo},
+		#{communityTitle},
+		#{communityContent},
+		#{categoryId} <!-- 카테고리 ID 수정 -->
+		)
+		<selectKey keyProperty="communityNo"
+			resultType="java.lang.String" order="AFTER">
+			SELECT 'B' ||
+			SEQ_COMMUNITY_NO.CURRVAL FROM DUAL
+		</selectKey>
+	</insert>
+
+	<select id="getCategoryNameById" resultType="String">
+		SELECT category_name
+		FROM BOARD_CATEGORY
+		WHERE category_id = #{categoryId}
+	</select>
+
+
+
+	<!-- 첨부파일 저장 -->
+	<insert id="insertFile" parameterType="BoardFile">
+		INSERT INTO FILE_TABLE (
+		FILE_NO, COMMUNITY_NO, USER_NO, ORIGIN_NAME, CHANGE_NAME,
+		ALLOW_DOWNLOAD,
+		FILE_SIZE
+		) VALUES (
+		SEQ_FILE_NO.NEXTVAL, #{communityNo},
+		#{userNo},
+		#{originName}, #{changeName},
+		CASE WHEN #{allowDownload} IS
+		NULL THEN
+		'Y' ELSE #{allowDownload} END,
+		#{fileSize}
+		)
+	</insert>
+
+	<!-- 첨부파일 저장 병원 -->
+	<insert id="insertFileAC" parameterType="BoardFile">
+		INSERT INTO FILE_TABLE (
+		FILE_NO, COMMUNITY_NO, HOS_ACCOUNT_NO, ORIGIN_NAME, CHANGE_NAME,
+		ALLOW_DOWNLOAD,
+		FILE_SIZE
+		) VALUES (
+		SEQ_FILE_NO.NEXTVAL, #{communityNo},
+		#{hosAcNo},
+		#{originName}, #{changeName},
+		CASE WHEN #{allowDownload} IS
+		NULL THEN
+		'Y' ELSE #{allowDownload} END,
+		#{fileSize}
+		)
+	</insert>
+
+
+
+	<!-- communityMapper.xml -->
+	<delete id="deleteBoard" parameterType="String">
+		UPDATE COMMUNITY
+		SET
+		STATUS =
+		'N'
+		WHERE COMMUNITY_NO = #{bno}
+	</delete>
+
+
+	<delete id="adminDeleteBoard" parameterType="String">
+		DELETE FROM
+		COMMUNITY
+		WHERE COMMUNITY_NO = #{bno}
+	</delete>
+
+	<update id="adminRestoreBoard" parameterType="String">
+		UPDATE COMMUNITY
+		SET
+		STATUS = 'Y'
+		WHERE COMMUNITY_NO = #{bno}
+	</update>
+
+
+
+	<!-- bno로 게시글 + 첨부파일 정보 조회 -->
+	<select id="viewDetailPage" resultMap="communityResult">
+		SELECT
+		B.COMMUNITY_NO AS communityNo,
+		B.COMMUNITY_TITLE AS communityTitle,
+		B.USER_NO AS userNo,
+		M.USER_ID AS communityWriter,
+		B.COMMUNITY_CONTENT AS communityContent,
+		TO_CHAR(B.ENROLL_DATE, 'YYYY-MM-DD') AS enrollDate,
+		TO_CHAR(B.MODIFIED_DATE, 'YYYY-MM-DD') AS modifiedDate,
+		B.COMMUNITY_VIEWS AS communityViews,
+		C.CATEGORY_ID AS categoryId,
+		C.CATEGORY_NAME AS categoryName,
+		B.STATUS AS status,
+		F.FILE_NO AS fileNo,
+		F.ORIGIN_NAME AS originName,
+		F.CHANGE_NAME AS changeName,
+		F.ALLOW_DOWNLOAD AS allowDownload,
+		F.FILE_SIZE AS fileSize,
+		HI.HOS_NAME AS hosName,
+		HA.HOS_ACCOUNT_NO AS hosAccountNo
+		FROM
+		COMMUNITY B
+		LEFT JOIN
+		MEMBER M ON B.USER_NO = M.USER_NO
+		LEFT JOIN
+		FILE_TABLE F ON B.COMMUNITY_NO = F.REF_NO  <!-- 수정: FILE_TABLE의 REF_NO 사용 -->
+		LEFT JOIN
+		BOARD_CATEGORY C ON B.CATEGORY_ID = C.CATEGORY_ID
+		AND C.IS_ACTIVE = 'Y'
+		LEFT JOIN
+		HOSPITAL_ACCOUNT HA ON B.HOS_ACCOUNT_NO = HA.HOS_ACCOUNT_NO
+		LEFT JOIN
+		HOSPITAL_INFO HI ON HA.HOS_NO = HI.HOS_NO
+		WHERE
+		B.STATUS = 'Y'
+		AND B.COMMUNITY_NO = #{bno}
+	</select>
+
+
+	<!-- bno로 게시글 + 첨부파일 정보 조회 병원거 -->
+
+	<select id="selectBoardAC" resultMap="communityResult">
+		SELECT
+		B.COMMUNITY_NO,
+		B.COMMUNITY_TITLE,
+		B.USER_NO,
+		M.USER_ID AS COMMUNITY_WRITER,
+		B.COMMUNITY_CONTENT,
+		TO_CHAR(B.ENROLL_DATE, 'YYYY-MM-DD') AS ENROLL_DATE,
+		TO_CHAR(B.MODIFIED_DATE, 'YYYY-MM-DD') AS MODIFIED_DATE,
+		B.COMMUNITY_VIEWS,
+		C.CATEGORY_ID,
+		C.CATEGORY_NAME,
+		B.STATUS,
+		F.FILE_NO,
+		F.ORIGIN_NAME,
+		F.CHANGE_NAME,
+		F.ALLOW_DOWNLOAD,
+		F.FILE_SIZE,
+		HI.HOS_NAME,
+		HA.HOS_ACCOUNT_NO
+		FROM
+		COMMUNITY B
+		LEFT JOIN
+		MEMBER M ON B.USER_NO = M.USER_NO
+		LEFT JOIN
+		FILE_TABLE F ON B.COMMUNITY_NO = F.REF_NO -- 수정: REF_NO로 변경
+		AND F.BOARD_TYPE = 'COMMUNITY' -- 게시판 타입 추가 (필요시)
+		LEFT JOIN
+		BOARD_CATEGORY C ON B.CATEGORY_ID = C.CATEGORY_ID
+		AND C.IS_ACTIVE = 'Y'
+		LEFT JOIN
+		HOSPITAL_ACCOUNT HA ON B.HOS_ACCOUNT_NO = HA.HOS_ACCOUNT_NO
+		LEFT JOIN
+		HOSPITAL_INFO HI ON HA.HOS_NO = HI.HOS_NO
+		WHERE
+		B.STATUS = 'Y'
+		AND B.COMMUNITY_NO = 'B2015'; -- 특정 게시글 필터
+	</select>
+
+
+	<select id="getBoardNavigation" parameterType="int"
+		resultType="COMMUNITY">
+		SELECT *
+		FROM (
+		SELECT
+		BNO,
+		LEAD(BNO, 1, NULL) OVER (ORDER BY
+		BNO DESC) AS next,
+		LAG(BNO, 1, NULL) OVER (ORDER BY BNO DESC) AS last,
+		TITLE,
+		LEAD(TITLE, 1, NULL) OVER (ORDER BY BNO DESC) AS nexttitle,
+		LAG(TITLE, 1, NULL) OVER (ORDER BY BNO DESC) AS lasttitle
+		FROM
+		COMMUNITY
+		WHERE STATUS = 'Y'
+		)
+		WHERE BNO = #{bno}
+	</select>
+
+
+
+
+
+	<update id="updateBoard" parameterType="COMMUNITY">
+		UPDATE COMMUNITY
+		SET
+		CATEGORY_ID = #{categoryId},
+		COMMUNITY_TITLE = #{communityTitle},
+		COMMUNITY_CONTENT
+		= #{communityContent},
+		MODIFIED_DATE = SYSDATE
+		WHERE
+		COMMUNITY_NO
+		= #{communityNo}
+	</update>
+
+
+
+
+
+	<select id="selectTopBoardList" resultMap="communityResult">
+		SELECT *
+		FROM (
+		SELECT
+		COMMUNITY_NO,
+		COMMUNITY_TITLE,
+		COMMUNITY_WRITER,
+		ORIGIN_NAME,
+		COUNT AS viewCount, <!-- 조회수 -->
+		CREATE_DATE AS createDate
+		FROM COMMUNITY
+		WHERE STATUS
+		= 'Y'
+		ORDER BY COUNT
+		DESC
+		)
+		WHERE ROWNUM BETWEEN 1 AND 5
+	</select>
+
+
+
+
+
+	<!-- 카테고리별 게시글 수 조회 -->
+	<select id="selectCountCategoryList" parameterType="string"
+		resultType="int">
+		SELECT COUNT(*)
+		FROM COMMUNITY b
+		JOIN BOARD_CATEGORY c ON
+		b.CATEGORY_ID = c.CATEGORY_ID
+		WHERE b.STATUS = 'Y' AND c.CATEGORY_ID =
+		#{type}
+	</select>
+
+	<select id="getPostsByUserNo" parameterType="string"
+		resultMap="communityResult">
+		SELECT COMMUNITY_NO, COMMUNITY_TITLE, ENROLL_DATE,
+		COMMUNITY_VIEWS, CATEGORY_ID,
+		STATUS
+		FROM COMMUNITY
+		WHERE USER_NO =
+		#{userNo}
+		AND STATUS = 'Y'
+		ORDER BY
+		ENROLL_DATE DESC
+	</select>
+
+	<!-- 병원 번호 게시글 조회 -->
+	<select id="getPostsByHosNo" parameterType="string"
+		resultMap="communityResult">
+		SELECT COMMUNITY_NO, COMMUNITY_TITLE, ENROLL_DATE,
+		COMMUNITY_VIEWS,
+		STATUS
+		FROM COMMUNITY
+		WHERE HOS_ACCOUNT_NO = #{hosAcNo}
+		AND STATUS = 'Y'
+		ORDER BY
+		ENROLL_DATE DESC
+	</select>
+
+
+	<!-- MedAnswer 추가 -->
+	<insert id="insertAnswer" parameterType="MedAnswer">
+		INSERT INTO MED_ANSWERS (
+		ANSWER_NO,
+		COMMUNITY_NO,
+		MED_NO,
+		ANSWER_CONTENT,
+		ENROLL_DATE,
+		MODIFIED_DATE,
+		STATUS,
+		IS_MEDICAL_FIELD
+		)
+		VALUES (
+		SEQ_ANSWER_NO.NEXTVAL,
+		#{communityNo},
+		#{medNo},
+		#{answerContent},
+		SYSDATE,  <!-- 현재 날짜와 시간을 저장 -->
+		NULL,
+		#{status},
+		#{isMedicalField}
+		)
+	</insert>
+
+
+
+	<select id="getAnswersByBoardNo" parameterType="String"
+		resultType="MedAnswer">
+		SELECT
+		MA.ANSWER_NO AS answerNo,
+		MA.COMMUNITY_NO AS
+		communityNo,
+		MA.MED_NO AS medNo,
+		MA.ANSWER_CONTENT AS answerContent,
+		TO_CHAR(MA.ENROLL_DATE, 'YYYY/MM/DD') AS enrollDate,
+		TO_CHAR(MA.MODIFIED_DATE, 'YYYY/MM/DD') AS modifiedDate,
+		MA.STATUS AS
+		status,
+		MA.IS_MEDICAL_FIELD AS isMedicalField,
+		M.USER_NAME AS
+		doctorName, -- MEMBER 테이블에서 작성자 이름 가져오기
+		MF.MEDICAL_FIELD_ID AS
+		medicalFieldId -- MEDICAL_FIELD 테이블에서 medicalFieldId 가져오기
+		FROM
+		MED_ANSWERS MA
+		JOIN
+		MEMBER M ON MA.MED_NO = M.MED_KEY -- MEMBER 테이블과 연결
+		JOIN
+		MEDICAL_FIELD MF ON M.MED_KEY = MF.MED_NO -- MEDICAL_FIELD 테이블과 연결
+		WHERE
+		MA.COMMUNITY_NO = #{bno}
+	</select>
+
+
+
+</mapper>
+
+
+
+
+
+                                                                   
+	         

@@ -114,22 +114,22 @@
 						<tr>
 							<td class="category">${board.categoryName}</td>
 							<td class="title">
-								<a href="${pageContext.request.contextPath}/community/boardDetail?bno=${board.boardNo}">
-									${board.boardTitle}
+								<a href="${pageContext.request.contextPath}/community/boardDetail?bno=${board.communityNo}">
+									${board.communityTitle}
 								</a>
 							</td>
 							<td class="author">
 								<c:choose>
-									<c:when test="${empty board.boardWriter}">
+									<c:when test="${empty board.communityWriter}">
 										${board.hosName}
 									</c:when>
 									<c:otherwise>
-										${board.boardWriter}
+										${board.communityWriter}
 									</c:otherwise>
 								</c:choose>
 							</td>
 							<td class="date">${board.enrollDate}</td>
-							<td class="comment">${board.boardViews}</td>
+							<td class="comment">${board.communityViews}</td>
 						</tr>
 					</c:forEach>
 				</tbody>

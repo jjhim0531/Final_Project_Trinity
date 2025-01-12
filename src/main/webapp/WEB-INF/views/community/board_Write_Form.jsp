@@ -75,10 +75,10 @@
 							<option>말머리 선택</option>
 						</select>
 					</div>
-					<input type="text" name="boardTitle" placeholder="제목을 입력해 주세요." class="form-control mt-3" required>
+					<input type="text" name="communityTitle" placeholder="제목을 입력해 주세요." class="form-control mt-3" required>
 
 
-					<textarea id="summernote" name="boardContent" class="post-textarea form-control mt-3"></textarea>
+					<textarea id="summernote" name="communityContent" class="post-textarea form-control mt-3"></textarea>
 					<div class="mt-4">
 						<label for="upfile" class="form-label">첨부파일</label> <input type="file" id="upfile"
 							name="upfiles" class="form-control" multiple onchange="checkFileValidation(this)">

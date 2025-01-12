@@ -10,10 +10,15 @@
 <link rel="stylesheet"
 	href="${ pageContext.servletContext.contextPath }/resources/css/common/main_footer_style.css">
 
-<script src="${pageContext.servletContext.contextPath}/resources/js/community/comment.js"></script>
+<script src="${pageContext.servletContext.contextPath}/resources/js/boardCommon/comment.js"></script>
 </head>
 <body>
-
+    <script>
+        const refNo = "${refNo}";
+        const boardType = "${boardType}";
+       
+        console.log("refNo:", refNo, "boardType:", boardType);
+       </script>
 
 <div class="comment-section-container">
     <div class="comment-header"> <!-- 이 부분은 댓글 목록 제목용 -->

@@ -141,7 +141,7 @@
 					</div> -->
 
 
-					<%@ include file="/WEB-INF/views/common/comments.jsp" %>
+					<%@ include file="/WEB-INF/views/boardCommon/comments.jsp" %>
 				</div>
 				<div class="empty-space"></div>
 		</main>

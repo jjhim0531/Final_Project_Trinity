@@ -178,8 +178,8 @@
 					<c:forEach var="event" items="${latestEventPosts}">
 						<div class="board_content-detail">
 							<div class="board_content1">
-								<a href="${pageContext.request.contextPath}/community/boardDetail?bno=${event.boardNo}">
-									${event.boardTitle}
+								<a href="${pageContext.request.contextPath}/community/boardDetail?bno=${event.communityNo}">
+									${event.communityTitle}
 								</a>
 							</div>
 							<div class="board_content2">${event.enrollDate}</div>
