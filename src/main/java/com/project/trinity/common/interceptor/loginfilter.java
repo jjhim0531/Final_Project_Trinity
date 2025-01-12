@@ -41,7 +41,7 @@ public class loginfilter implements Filter {
                         String userId = cookie.getValue();
                         Member member = memberService.findByUserId(userId);
                         if (member != null) {
-                            // ì„¸ì…˜ì„ ìƒˆë¡œ ë§Œë“¤ê³  ë¡œê·¸ì¸ ì‚¬ìš©ì ì •ë³´ ì„¤ì •
+                            // ¼¼¼ÇÀ» »õ·Î ¸¸µé°í ·Î±×ÀÎ »ç¿ëÀÚ Á¤º¸ ¼³Á¤
                             session = httpRequest.getSession();
                             session.setAttribute("loginUser", member);
                         }

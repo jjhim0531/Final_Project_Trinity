@@ -30,8 +30,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.project.trinity.community.board.model.vo.Board;
-import com.project.trinity.community.board.service.BoardService;
+import com.project.trinity.board.community.model.vo.Board;
+import com.project.trinity.board.community.service.BoardService;
 import com.project.trinity.healthreservation.service.HealthReservationService;
 import com.project.trinity.member.model.vo.Member;
 import com.project.trinity.member.service.EmailService;

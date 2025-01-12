@@ -11,17 +11,17 @@ public class LoginInterceptor implements HandlerInterceptor{
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
-		//return : true -> ê¸°ì¡´ìš”ì²­íë¦„ëŒ€ë¡œ ì§„í–‰(Controllerë¡œ ì´ë™)
-		//return : false -> ìš”ì²­ì¤‘ë‹¨í›„ ë°˜í™˜
-		System.out.println("ì¸í„°ì…‰í„° ì‹¤í–‰ì¤‘...");
+		//return : true -> ±âÁ¸¿äÃ»Èå¸§´ë·Î ÁøÇà(Controller·Î ÀÌµ¿)
+		//return : false -> ¿äÃ»Áß´ÜÈÄ ¹İÈ¯
+		System.out.println("ÀÎÅÍ¼ÁÅÍ ½ÇÇàÁß...");
 		HttpSession session = request.getSession();
 		if(session.getAttribute("loginUser") != null) {
-			System.out.println("ì ‘ì† ê°€ëŠ¥");
+			System.out.println("Á¢¼Ó °¡´É");
 			return true;
 		} else {
-			session.setAttribute("alertMsg", "ë¡œê·¸ì¸ í›„ ì´ìš©ê°€ëŠ¥í•œ ì„œë¹„ìŠ¤ì…ë‹ˆë‹¤.");
+			session.setAttribute("alertMsg", "·Î±×ÀÎ ÈÄ ÀÌ¿ë°¡´ÉÇÑ ¼­ºñ½ºÀÔ´Ï´Ù.");
 			response.sendRedirect(request.getContextPath());
-			System.out.println("ì ‘ì† ë¶ˆê°€");
+			System.out.println("Á¢¼Ó ºÒ°¡");
 			return false;
 		}
 	}

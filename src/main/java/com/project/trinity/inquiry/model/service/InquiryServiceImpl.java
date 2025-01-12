@@ -7,7 +7,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.project.trinity.community.board.model.vo.Board;
+import com.project.trinity.board.community.model.vo.Board;
 import com.project.trinity.community.common.vo.PageInfo;
 import com.project.trinity.inquiry.model.dao.InquiryDao;
 import com.project.trinity.inquiry.model.vo.Inquiry;

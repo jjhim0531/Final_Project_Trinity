@@ -1,12 +1,10 @@
-package com.project.trinity.community.board.controller;
+package com.project.trinity.board.community.controller;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
+
 import java.util.List;
 import java.util.Map;
 
@@ -31,28 +29,31 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.google.gson.Gson;
-import com.project.trinity.community.board.model.vo.Board;
-import com.project.trinity.community.board.model.vo.BoardCategory;
-import com.project.trinity.community.board.model.vo.BoardFile;
-import com.project.trinity.community.board.model.vo.Like;
-import com.project.trinity.community.board.model.vo.MedAnswer;
-import com.project.trinity.community.board.model.vo.Comment;
-import com.project.trinity.community.board.service.BoardService;
-import com.project.trinity.community.common.vo.Template;
-import com.project.trinity.community.common.vo.PageInfo;
+import com.project.trinity.board.common.model.vo.BoardCategory;
+import com.project.trinity.board.common.model.vo.BoardFile;
+import com.project.trinity.board.common.model.vo.PageInfo;
+import com.project.trinity.board.common.model.vo.Template;
+import com.project.trinity.board.common.service.BoardCommonService;
+
+import com.project.trinity.board.community.model.vo.Community;
+import com.project.trinity.board.community.model.vo.MedAnswer;
+import com.project.trinity.board.community.service.CommunityService;
 import com.project.trinity.member.model.vo.MedicalField;
 import com.project.trinity.member.model.vo.Member;
 import com.project.trinity.member.service.MemberService;
 
 @Controller
 @RequestMapping("/community")
-public class BoardController {
-    private final BoardService boardService;
+public class CommunityController {
+	
+	private final BoardCommonService boardCommonSerive;
+    private final CommunityService communitySerive;
     private final MemberService memberService;
 
     @Autowired
-    public BoardController(BoardService boardService, MemberService memberService) {
-        this.boardService = boardService;
+    public CommunityController(BoardCommonService boardCommonSerive, CommunityService communitySerive, MemberService memberService) {
+    	this.boardCommonSerive = boardCommonSerive;
+    	this.communitySerive = communitySerive;
         this.memberService = memberService; // 초기화
     }
 
@@ -69,14 +70,14 @@ public class BoardController {
  	    }
 
 	    // 카테고리 이름 설정
-	    String categoryName = boardService.getCategoryNameById(categoryId);
+	    String categoryName = communitySerive.getCategoryNameById(categoryId);
 
 	    // 페이징 정보 설정
-	    int listCount = boardService.selectCountCategoryList(categoryId); // 총 게시글 수 조회
+	    int listCount = communitySerive.selectCountCategoryList(categoryId); // 총 게시글 수 조회
 	    PageInfo pi = Template.getPageInfo(listCount, currentPage, 10, 20); // 페이징 계산
 
 	 // 게시글 목록 조회, 실시간 인기글 동시 구현, 셀렉트박스 정렬
-	 		List<Board> boardList = boardService.selectListByCategory(categoryId, pi, sortType);
+	 		List<Community> boardList = communitySerive.selectListByCategory(categoryId, pi, sortType);
 	    // 모델에 데이터 추가
 	    m.addAttribute("categoryId", categoryId);
 	    m.addAttribute("categoryName", categoryName);
@@ -84,7 +85,7 @@ public class BoardController {
 	    m.addAttribute("boardList", boardList);
 	    m.addAttribute("pi", pi);
 
-	    return "community/board";
+	    return "community/community_Board";
 	}
 
 
@@ -97,7 +98,7 @@ public class BoardController {
 		System.out.println("Received categoryId: " + categoryId);
 
 		// categoryId를 통해 categoryName을 조회
-		String categoryName = boardService.getCategoryNameById(categoryId);
+		String categoryName = communitySerive.getCategoryNameById(categoryId);
 		System.out.println("Category Name: " + categoryName);
 
 		// Model에 categoryName을 추가하여 JSP로 전달
@@ -118,9 +119,9 @@ public class BoardController {
 	    System.out.println("Received bno: " + bno);
 
 	    // 현재 게시글 조회
-	    Board b = boardService.viewDetailPage(bno);
+	    Community b = communitySerive.viewDetailPage(bno);
 
-	    List<MedAnswer> ans = boardService.getAnswersByBoardNo(bno);
+	    List<MedAnswer> ans = communitySerive.getAnswersByBoardNo(bno);
 	    
 	    System.out.println("상세페이지 ans Debug: " + ans);
 	    if (b == null) {
@@ -128,18 +129,18 @@ public class BoardController {
 	        return "/common/errorPage";
 	    }
 	    
-	    if(b.getBoardWriter() == null) {
-	    	b.setBoardWriter(b.getHosName());
+	    if(b.getCommunityWriter() == null) {
+	    	b.setCommunityWriter(b.getHosName());
 	    }
 
 	    // 조회수 증가
-	    int countResult = boardService.increaseCount(bno);
+	    int countResult = communitySerive.increaseCount(bno);
 	   
 	    // 첨부파일 리스트 가져오기
-	    List<BoardFile> fileList = boardService.getFileList(bno);   
+	    List<BoardFile> fileList = boardCommonSerive.getFileList(bno);   
 
 	    // 카테고리 이름 조회
-	    String categoryName = boardService.getCategoryNameById(b.getCategoryId());
+	    String categoryName = communitySerive.getCategoryNameById(b.getCategoryId());
 
 	    // 로그인 사용자 정보 가져오기
 	    Member loginUser = (Member) session.getAttribute("loginUser");
@@ -147,15 +148,15 @@ public class BoardController {
 	        m.addAttribute("doctorName", loginUser.getUserName()); // 의사 이름을 doctorName으로 전달
 	    }
 	    // 이전 글 번호 조회 후 상세 정보 조회
-	    String prevBno = boardService.getPreviousBoard(bno);
-	    Board prevBoard = (prevBno != null) ? boardService.viewDetailPage(prevBno) : null;
+	    String prevBno = communitySerive.getPreviousBoard(bno);
+	    Community prevBoard = (prevBno != null) ? communitySerive.viewDetailPage(prevBno) : null;
 
 	    // 다음 글 번호 조회 후 상세 정보 조회
-	    String nextBno = boardService.getNextBoard(bno);
-	    Board nextBoard = (nextBno != null) ? boardService.viewDetailPage(nextBno) : null;
+	    String nextBno = communitySerive.getNextBoard(bno);
+	    Community nextBoard = (nextBno != null) ? communitySerive.viewDetailPage(nextBno) : null;
 
 	    // 카테고리 목록 조회 (드롭다운 메뉴용)
-	    List<BoardCategory> categories = boardService.getCategories();
+	    List<BoardCategory> categories = boardCommonSerive.getCategories();
 
 	    // 모델에 데이터 추가
 	    m.addAttribute("b", b); // 현재 게시글
@@ -172,7 +173,7 @@ public class BoardController {
 
 	// showSummernote 후에 작성완료 버튼 클릭하면 작동
 	@PostMapping("/write")
-	public String insertBoard(Board b,
+	public String insertBoard(Community b,
 	        @RequestParam(value = "allowDownload", required = false) List<String> allowDownload,
 	        @RequestParam(value = "upfiles", required = false) ArrayList<MultipartFile> successUpfiles, HttpSession session,
 	        Model m) {
@@ -181,7 +182,7 @@ public class BoardController {
 	    Member loginUser = (Member) session.getAttribute("loginUser");
 
 	    // 게시글 제목 검증
-	    if (b.getBoardTitle() == null || b.getBoardTitle().trim().isEmpty()) {
+	    if (b.getCommunityTitle() == null || b.getCommunityTitle().trim().isEmpty()) {
 	        m.addAttribute("errorMsg", "제목을 입력해야 합니다.");
 	        return "/common/errorPage";
 	    }
@@ -194,7 +195,9 @@ public class BoardController {
 	 
 
 	    // 게시글 저장
-	    int boardResult = boardService.insertBoard(b, loginUser.getUserNo());
+	    int boardResult = communitySerive.insertBoard(b, loginUser.getUserNo());
+	 // communityNo 생성 확인
+	    System.out.println("Generated communityNo: " + b.getCommunityNo());
 	    if (boardResult > 0) {
 	        // 파일 업로드 처리
 	        if (successUpfiles != null && !successUpfiles.isEmpty()) {
@@ -205,7 +208,7 @@ public class BoardController {
 	                    if (changeName != null) {
 	                        // 파일 정보 설정
 	                        BoardFile bf = new BoardFile();
-	                        bf.setBoardNo(b.getBoardNo());
+	                        bf.setBoardNo(b.getCommunityNo());
 	                        bf.setUserNo(loginUser.getUserNo());
 	                        bf.setOriginName(upfile.getOriginalFilename());
 	                        bf.setChangeName("/resources/uploadFile/" + changeName);
@@ -214,7 +217,7 @@ public class BoardController {
 	                        // allowDownload 값 설정
 	                        bf.setAllowDownload((allowDownload != null && allowDownload.size() > i) ? allowDownload.get(i) : "Y");
 
-	                        int fileResult = boardService.insertFile(bf);
+	                        int fileResult = boardCommonSerive.insertFile(bf);
 	                        if (fileResult <= 0) {
 	                            m.addAttribute("errorMsg", "파일 정보를 저장하는 중 오류가 발생했습니다.");
 	                            return "/common/errorPage";
@@ -228,7 +231,7 @@ public class BoardController {
 	        }
 
 	        session.setAttribute("alertMsg", "게시글 작성 성공");
-	        return "redirect:/community/boardDetail?bno=" + b.getBoardNo();
+	        return "redirect:/community/boardDetail?bno=" + b.getCommunityNo();
 	    } else {
 	        m.addAttribute("errorMsg", "게시글 작성에 실패했습니다.");
 	        return "/common/errorPage";
@@ -240,14 +243,14 @@ public class BoardController {
 	    System.out.println("의료진 답글 Board No: " + bno);
 	    
 	    // 게시글 정보 가져오기
-	    Board b = boardService.viewDetailPage(bno);
+	    Community b = communitySerive.viewDetailPage(bno);
 	    
 	    // 첨부파일 리스트 가져오기
-	    List<BoardFile> fileList = boardService.getFileList(bno);
+	    List<BoardFile> fileList = boardCommonSerive.getFileList(bno);
 	    System.out.println("Attached files: " + fileList);
 
 	    // 카테고리 이름 조회
-	    String categoryName = boardService.getCategoryNameById(b.getCategoryId());
+	    String categoryName = communitySerive.getCategoryNameById(b.getCategoryId());
 	    
 	    // 모델에 데이터 추가
 	    m.addAttribute("b", b); // 게시글 정보
@@ -278,7 +281,7 @@ public class BoardController {
 	    }
 	    System.out.println("답글 제출 전 ANS Debug: " + ans);
 	    // 답글 저장 로직
-	    boardService.saveAnswer(ans);
+	    communitySerive.saveAnswer(ans);
 	    System.out.println("답글 제출 후 ANS Debug: " + ans);
 	    // 답글 저장 후 게시글 상세보기로 리다이렉트
 	    return "redirect:/community/boardDetail?bno=" + ans.getBoardNo();
@@ -324,29 +327,16 @@ public class BoardController {
 		return session.getServletContext().getContextPath() + path + changeName;
 	}
 
-	@GetMapping("/downloadFile")
-	public ResponseEntity<Resource> downloadFile(@RequestParam("fileNo") String fileNo) {
-		BoardFile file = boardService.getSingleFile(fileNo);
-		if (file == null || !"Y".equals(file.getAllowDownload())) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-		}
 
-		// 파일 경로로 실제 파일 제공
-		String filePath = "파일 저장 경로/" + file.getChangeName();
-		Resource resource = new FileSystemResource(new File(filePath));
-		return ResponseEntity.ok()
-				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getOriginName() + "\"")
-				.body(resource);
-	}
 
 	@GetMapping("/edit")
 	public String editBoardPage(@RequestParam("bno") String bno, Model m) {
 		// 게시글 정보 조회
-		Board b = boardService.viewDetailPage(bno);
+		Community b = communitySerive.viewDetailPage(bno);
 		System.out.println("boardNo: " + bno);
 
 		// 첨부파일 목록 조회
-		List<BoardFile> fileList = boardService.getFileList(bno);
+		List<BoardFile> fileList = boardCommonSerive.getFileList(bno);
 		System.out.println("첨부파일 결과: " + fileList);
 
 		// 게시글이 존재하는지 확인
@@ -368,17 +358,12 @@ public class BoardController {
 		}
 	}
 
-	@GetMapping("/getFileList")
-	@ResponseBody
-	public List<BoardFile> getAttachedFiles(@RequestParam("bno") String bno) {
-		System.out.println("수정첨부파일Received bno: " + bno); // 서버에서 bno 값 출력
-	    return boardService.getFileList(bno);
-	}
+	
 
 	
 	// 수정 완료 처리
 	@PostMapping("/update")
-	public String updateBoard(Board b,
+	public String updateBoard(Community b,
 			@RequestParam(value = "allowDownload", required = false) List<String> allowDownload,
 			@RequestParam(value = "upfiles", required = false) List<MultipartFile> newFiles, HttpSession session,
 			Model m) {
@@ -389,7 +374,6 @@ public class BoardController {
 		// -> 새로운파일로 변경x
 		
 		
-		System.out.println("수정완료 newFiles : " + newFiles);
 		try {
 			
 			ArrayList<BoardFile> fileList = new ArrayList<>();
@@ -401,7 +385,7 @@ public class BoardController {
 						String changeName = Template.saveFile(newFiles.get(i), session, "/resources/uploadFile/");
 						if (changeName != null) {
 							BoardFile bf = new BoardFile();
-							bf.setBoardNo(b.getBoardNo());
+							bf.setBoardNo(b.getCommunityNo());
 							bf.setUserNo(b.getUserNo());
 							bf.setOriginName(newFiles.get(i).getOriginalFilename());
 							bf.setChangeName("/resources/uploadFile/" + changeName);
@@ -417,10 +401,10 @@ public class BoardController {
 			
 			
 			
-			int boardResult = boardService.updateBoard(b, fileList);
+			int boardResult = communitySerive.updateBoard(b, fileList);
 			
 			// 수정 성공 시 상세 페이지로 리다이렉트
-			return "redirect:/community/boardDetail?bno=" + b.getBoardNo();
+			return "redirect:/community/boardDetail?bno=" + b.getCommunityNo();
 		} catch (Exception e) {
 			e.printStackTrace();
 			m.addAttribute("errorMsg", "게시글 수정 중 오류가 발생했습니다.");
@@ -447,13 +431,13 @@ public class BoardController {
 	    }
 	    
 	    // 게시글에 첨부된 파일 목록 가져오기
-	    List<BoardFile> fileList = boardService.getFileList(bno);	 
+	    List<BoardFile> fileList = boardCommonSerive.getFileList(bno);	 
 
 	    int boardDeleteResult;
 
 	    if (isAdmin) {
 	        // 관리자인 경우 물리적 삭제
-	        boardDeleteResult = boardService.adminDeleteBoard(bno);
+	        boardDeleteResult = communitySerive.adminDeleteBoard(bno);
 	        System.out.println("관리자에 의해 게시글이 완전 삭제되었습니다.");
 
 	        // 첨부 파일 삭제
@@ -471,7 +455,7 @@ public class BoardController {
 	        }
 	    } else {
 	        // 일반 사용자인 경우 논리적 삭제
-	        boardDeleteResult = boardService.deleteBoard(bno);
+	        boardDeleteResult = communitySerive.deleteBoard(bno);
 	        System.out.println("사용자에 의해 게시글이 논리 삭제되었습니다.");
 	    }
 
@@ -500,7 +484,7 @@ public class BoardController {
 	    }
 
 	    // 복구 작업 수행
-	    int restoreResult = boardService.restoreBoard(bno);
+	    int restoreResult = communitySerive.restoreBoard(bno);
 
 	    if (restoreResult > 0) {
 	        System.out.println("게시글 복구 성공: " + bno);
@@ -511,110 +495,5 @@ public class BoardController {
 	    }
 	}
 
-	@PostMapping("/deleteFile")
-	public String deleteFile(@RequestBody Map<String, String> fileData) {
-		String fileNo = fileData.get("fileNo");
-		BoardFile file = boardService.getSingleFile(fileNo);
-
-		if (file == null) {
-			return "파일이 존재하지 않습니다.";
-		}
-
-		// 실제 파일 삭제
-		File targetFile = new File("파일 저장 경로/" + file.getChangeName());
-		if (targetFile.exists() && targetFile.delete()) {
-			boardService.deleteFile(fileNo); // 데이터베이스에서도 삭제
-			return "삭제 성공";
-		} else {
-			return "파일 삭제 실패";
-		}
-	}
-
-	// 댓글을 DB에 저장
-	@ResponseBody
-	@RequestMapping("rinsert.bo")
-	public String ajaxInsertReply(Comment r) {
-
-		System.out.println("댓글 데이터: " + r); // 전달받은 댓글 데이터 확인
-		// 성공했을 때 success, 실패했을 때 fail
-		return boardService.insertComment(r) > 0 ? "success" : "fail";
-	}
-
-	
-	// 특정 게시물의 댓글목록을 json형식으로 반환
-		@ResponseBody
-		@RequestMapping(value = "rlist", produces = "application/json; charset=UTF-8")
-		public String ajaxSelectReplyList(String bno) {
-			System.out.println("댓글 목록 요청 - 게시글 번호: " + bno);
-
-			try {
-				ArrayList<Comment> list = boardService.selectReply(bno);
-				System.out.println("댓글 목록: " + list);
-				return new Gson().toJson(list);
-			} catch (Exception e) {
-				System.err.println("댓글 목록 조회 중 오류 발생: " + e.getMessage());
-				e.printStackTrace();
-				return null;
-			}
-		}
-	@ResponseBody
-	@RequestMapping("toggleLike.bo")
-	public Map<String, Object> toggleLike(@RequestParam("commentNo") String commentNo,
-			@RequestParam("userNo") String userNo, @RequestParam("isLike") int isLike) {
-		Map<String, Object> response = new HashMap<>();
-		try {
-			// 파라미터 유효성 검사
-			if (commentNo == null || userNo == null || (isLike != 0 && isLike != 1)) {
-				response.put("success", false);
-				response.put("message", "잘못된 요청 데이터입니다.");
-				return response;
-			}
-
-			// 좋아요/싫어요 로우데이터 가져오기
-			Like existingLike = boardService.getCurrentLikeState(commentNo, userNo);
-
-			if (existingLike == null) {
-				// 데이터가 없으면 새로 추가
-				boardService.insertLikeDislike(commentNo, userNo, isLike);
-
-				response.put("success", true);
-				response.put("likeCount", boardService.getLikeCount(commentNo));
-				response.put("dislikeCount", boardService.getDislikeCount(commentNo));
-				response.put("message", isLike == 1 ? "좋아요가 추가되었습니다." : "싫어요가 추가되었습니다.");
-				return response;
-			}
-
-			// 데이터가 있으면 현재 상태와 비교
-			if (existingLike.getIsLike() == isLike) {
-				response.put("success", false);
-				response.put("message", isLike == 1 ? "이미 좋아요를 누르셨습니다." : "이미 싫어요를 누르셨습니다.");
-				return response;
-			}
-
-			// 상태 업데이트
-			boardService.updateLikeDislike(commentNo, userNo, isLike);
-
-			response.put("success", true);
-			response.put("likeCount", boardService.getLikeCount(commentNo));
-			response.put("dislikeCount", boardService.getDislikeCount(commentNo));
-			response.put("message", isLike == 1 ? "좋아요로 변경되었습니다." : "싫어요로 변경되었습니다.");
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			response.put("success", false);
-			response.put("message", "서버 오류가 발생했습니다.");
-		}
-		return response;
-	}
-
-	@ResponseBody
-	@RequestMapping("rdelete.bo")
-	public String deleteReply(String commentNo) {
-		int result = boardService.deleteComment(commentNo); 
-
-		return result > 0 ? "success" : "fail";
-	}
-	
-	
 
 }

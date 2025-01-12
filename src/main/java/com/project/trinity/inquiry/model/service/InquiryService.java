@@ -2,7 +2,7 @@ package com.project.trinity.inquiry.model.service;
 
 import java.util.List;
 
-import com.project.trinity.community.board.model.vo.Board;
+import com.project.trinity.board.community.model.vo.Board;
 import com.project.trinity.community.common.vo.PageInfo;
 import com.project.trinity.inquiry.model.vo.Inquiry;
 

@@ -1,7 +1,7 @@
 package com.project.trinity.common.controller;
 
-import com.project.trinity.community.board.model.vo.Board;
-import com.project.trinity.community.board.service.BoardService;
+import com.project.trinity.board.community.model.vo.Community;
+import com.project.trinity.board.community.service.CommunityService;
 import com.project.trinity.inquiry.model.service.InquiryService;
 import com.project.trinity.member.service.MemberService;
 
@@ -15,12 +15,12 @@ import java.util.List;
 @Controller
 public class CommonController {
 
-	  private final BoardService boardService;
+	  private final CommunityService boardService;
 	  private final InquiryService inquiryService;
 	  private final MemberService memberService;
 	 
 	    @Autowired
-	    public CommonController(BoardService boardService, InquiryService inquiryService, MemberService memberService) {
+	    public CommonController(CommunityService boardService, InquiryService inquiryService, MemberService memberService) {
 	        this.boardService = boardService;
 	        this.inquiryService = inquiryService;
 	        this.memberService = memberService;
@@ -28,22 +28,22 @@ public class CommonController {
 
     @GetMapping("/main")
     public String main(Model m) {
-    	 // ìµœì‹  ê³µì§€ì‚¬í•­ ê²Œì‹œê¸€ 3ê°œ ê°€ì ¸ì˜¤ê¸°
-        List<Board> latestNoticePosts = inquiryService.getLatestInquiryPosts("CAT04"); // CAT04: ê³µì§€ì‚¬í•­ ID
-        // ìµœì‹  ì´ë²¤íŠ¸ ê²Œì‹œê¸€ 3ê°œ ê°€ì ¸ì˜¤ê¸°
-        List<Board> latestEventPosts = boardService.getLatestBoardPosts("CAT03"); // CAT03: ì´ë²¤íŠ¸ ID
-        // ì¸ì¦ëœ ë¦¬ë·° ìˆ˜, íšŒì› ìˆ˜, ì˜ì‚¬ ìˆ˜ ê°€ì ¸ì˜¤ê¸°
+    	 // ÃÖ½Å °øÁö»çÇ× °Ô½Ã±Û 3°³ °¡Á®¿À±â
+        List<Community> latestNoticePosts = inquiryService.getLatestInquiryPosts("CAT04"); // CAT04: °øÁö»çÇ× ID
+        // ÃÖ½Å ÀÌº¥Æ® °Ô½Ã±Û 3°³ °¡Á®¿À±â
+        List<Community> latestEventPosts = boardService.getLatestBoardPosts("CAT03"); // CAT03: ÀÌº¥Æ® ID
+        // ÀÎÁõµÈ ¸®ºä ¼ö, È¸¿ø ¼ö, ÀÇ»ç ¼ö °¡Á®¿À±â
         List<Integer> amountCount = memberService.selectCountList();
       
         System.out.println("Notice Posts: " + latestNoticePosts);
         System.out.println("Event Posts: " + latestEventPosts);
-        // ëª¨ë¸ì— ë°ì´í„° ì¶”ê°€
+        // ¸ğµ¨¿¡ µ¥ÀÌÅÍ Ãß°¡
         m.addAttribute("latestNoticePosts", latestNoticePosts);
         m.addAttribute("latestEventPosts", latestEventPosts);
         m.addAttribute("amountCount", amountCount);
     
       
-        // main.jspë¡œ ì´ë™
+        // main.jsp·Î ÀÌµ¿
         return "main";
     }
 }
