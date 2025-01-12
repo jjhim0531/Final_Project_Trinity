@@ -1,5 +1,4 @@
 --테이블 초기화----------------------------------------------------------------------------------------------------------
-
 DROP TABLE HOSPITAL_ACCOUNT CASCADE CONSTRAINTS;
 DROP TABLE HOSPITAL_INFO CASCADE CONSTRAINTS;
 DROP TABLE MEDICAL_FIELD CASCADE CONSTRAINTS;
@@ -8,36 +7,36 @@ DROP TABLE DOCTOR_REVIEW CASCADE CONSTRAINTS;
 DROP TABLE GENERAL_RESERVATION CASCADE CONSTRAINTS;
 DROP TABLE VACCINE_RESERVATION CASCADE CONSTRAINTS;
 DROP TABLE HEALTH_RESERVATION CASCADE CONSTRAINTS;
-DROP TABLE BOARD CASCADE CONSTRAINTS;
+DROP TABLE BOARD_CATEGORY CASCADE CONSTRAINTS;
+DROP TABLE SUB_CATEGORY CASCADE CONSTRAINTS;
+DROP TABLE COMMUNITY CASCADE CONSTRAINTS;
+DROP TABLE INQUIRY CASCADE CONSTRAINTS;
 DROP TABLE FILE_TABLE CASCADE CONSTRAINTS;
 DROP TABLE COMMENTS CASCADE CONSTRAINTS;
-DROP TABLE SUBCATEGORY CASCADE CONSTRAINTS;
+DROP TABLE LIKES CASCADE CONSTRAINTS;
 DROP TABLE MED_ANSWERS CASCADE CONSTRAINTS;
-DROP TABLE INQUIRY CASCADE CONSTRAINTS;
 DROP TABLE GUEST CASCADE CONSTRAINTS;
 DROP TABLE H_SUBJECT CASCADE CONSTRAINTS;
-DROP TABLE LIKES_TABLE CASCADE CONSTRAINTS;
 DROP TABLE RANKUP CASCADE CONSTRAINTS;
-DROP TABLE BOARD_CATEGORY CASCADE CONSTRAINTS;
 
 
 -- 기존 시퀀스 초기화 ------------------------------------------------------------------------------------------------
 DROP SEQUENCE SEQ_HOS_NO;
 DROP SEQUENCE SEQ_HOS_ACCOUNT_NO;
 DROP SEQUENCE SEQ_USER_NO;
-DROP SEQUENCE SEQ_BOARD_NO;
-DROP SEQUENCE SEQ_REVIEW_NO;
-DROP SEQUENCE SEQ_FILE_NO;
-DROP SEQUENCE SEQ_MED_NO;
+DROP SEQUENCE SEQ_COMMUNITY_NO;
 DROP SEQUENCE SEQ_INQUIRY_NO;
+DROP SEQUENCE SEQ_COMMENT_NO;
+DROP SEQUENCE SEQ_FILE_NO;
+DROP SEQUENCE SEQ_MED_ANSWER_NO; 
+DROP SEQUENCE SEQ_MED_NO;
+DROP SEQUENCE SEQ_REVIEW_NO;
 DROP SEQUENCE SEQ_GST_NO;
 DROP SEQUENCE SEQ_G_RES_NO;
 DROP SEQUENCE SEQ_V_RES_NO;
 DROP SEQUENCE SEQ_H_RES_NO;
 DROP SEQUENCE SEQ_SUB_KEY;
-DROP SEQUENCE SEQ_COMMENT_NO;
 DROP SEQUENCE SEQ_RANKUP;
-DROP SEQUENCE SEQ_ANSWER_NO; 
 
 
 -- 시퀀스 생성 -------------------------------------------------------------------------------------------------------
@@ -47,17 +46,16 @@ CREATE SEQUENCE SEQ_G_RES_NO START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE SEQ_V_RES_NO START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE SEQ_H_RES_NO START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE SEQ_USER_NO START WITH 1 INCREMENT BY 1 NOCACHE;
-CREATE SEQUENCE SEQ_BOARD_NO START WITH 1 INCREMENT BY 1 NOCACHE;
-CREATE SEQUENCE SEQ_REVIEW_NO START WITH 1 INCREMENT BY 1 NOCACHE;
-CREATE SEQUENCE SEQ_FILE_NO START WITH 1 INCREMENT BY 1 NOCACHE;
-CREATE SEQUENCE SEQ_MED_NO START WITH 1 INCREMENT BY 1 NOCACHE;
+CREATE SEQUENCE SEQ_COMMUNITY_NO START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE SEQ_INQUIRY_NO START WITH 1 INCREMENT BY 1 NOCACHE;
+CREATE SEQUENCE SEQ_COMMENT_NO START WITH 1 INCREMENT BY 1 NOCACHE;
+CREATE SEQUENCE SEQ_FILE_NO START WITH 1 INCREMENT BY 1 NOCACHE;
+CREATE SEQUENCE SEQ_MED_ANSWER_NO START WITH 1 INCREMENT BY 1 NOCACHE;
+CREATE SEQUENCE SEQ_MED_NO START WITH 1 INCREMENT BY 1 NOCACHE;
+CREATE SEQUENCE SEQ_REVIEW_NO START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE SEQ_GST_NO START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE SEQ_SUB_KEY START WITH 1 INCREMENT BY 1 NOCACHE;
-CREATE SEQUENCE SEQ_COMMENT_NO START WITH 1 INCREMENT BY 1 NOCACHE;
 CREATE SEQUENCE SEQ_RANKUP START WITH 1 INCREMENT BY 1 NOCACHE;
-CREATE SEQUENCE SEQ_ANSWER_NO START WITH 1 INCREMENT BY 1 NOCACHE; -- 새로 추가된 시퀀스
-
 
 
 
@@ -205,99 +203,99 @@ CREATE TABLE BOARD_CATEGORY (
     IS_ACTIVE CHAR(1) DEFAULT 'Y'             -- 활성화 여부 (Y/N)
 );
 
-CREATE TABLE SUBCATEGORY (
-    SUBCATEGORY_ID VARCHAR2(10) PRIMARY KEY,
-    CATEGORY_ID VARCHAR2(10) NOT NULL,
-    SUBCATEGORY_NAME VARCHAR2(50) NOT NULL,
-    SORT_ORDER NUMBER(10) DEFAULT 0,
-    IS_ACTIVE CHAR(1) DEFAULT 'Y',
-    CONSTRAINT FK_CATEGORY FOREIGN KEY (CATEGORY_ID) REFERENCES BOARD_CATEGORY(CATEGORY_ID)
+CREATE TABLE SUB_CATEGORY (
+    SUB_CATEGORY_ID VARCHAR2(10 BYTE) PRIMARY KEY, -- 하위 카테고리 고유 ID
+    CATEGORY_ID VARCHAR2(20 BYTE) NOT NULL,        -- 상위 카테고리 ID (BOARD_CATEGORY의 FK)
+    SUB_CATEGORY_NAME VARCHAR2(50 BYTE) NOT NULL, -- 하위 카테고리 이름
+    SORT_ORDER NUMBER(10,0) DEFAULT 0,            -- 정렬 순서
+    IS_ACTIVE CHAR(1 BYTE) DEFAULT 'Y',           -- 활성화 여부
+    CONSTRAINT fk_category FOREIGN KEY (CATEGORY_ID) REFERENCES BOARD_CATEGORY (CATEGORY_ID) -- 외래 키 설정
 );
 
 
--- BOARD 테이블: 게시글 정보
-CREATE TABLE BOARD (
-    BOARD_NO VARCHAR2(10) PRIMARY KEY,        -- 게시판 번호 (고유값)
-    BOARD_TYPE NUMBER,                        -- 게시판 타입
-    USER_NO VARCHAR2(10),            -- 사용자 번호 (외래키로 연결)
-    BOARD_TITLE VARCHAR2(200) NOT NULL,       -- 게시판 제목
-    BOARD_CONTENT VARCHAR2(4000),             -- 게시판 내용
-    ENROLL_DATE DATE DEFAULT SYSDATE,         -- 등록 날짜
-    MODIFIED_DATE DATE DEFAULT SYSDATE,       -- 수정 날짜
-    BOARD_VIEWS NUMBER(10) DEFAULT '0',     -- 조회수 (기본값: 0)
-    CATEGORY_ID VARCHAR2(20),                 -- 카테고리 ID (BOARD_CATEGORY 테이블의 외래키)
+
+CREATE TABLE COMMUNITY (
+    COMMUNITY_NO VARCHAR2(10) PRIMARY KEY,        -- 커뮤니티 번호 (고유값)
+    USER_NO VARCHAR2(10),                         -- 사용자 번호 (외래키로 연결)
+    COMMUNITY_TITLE VARCHAR2(200) NOT NULL,       -- 커뮤니티 제목
+    COMMUNITY_CONTENT VARCHAR2(4000),            -- 커뮤니티 내용
+    COMMUNITY_VIEWS NUMBER(10) DEFAULT '0',      -- 조회수 (기본값: 0)
+    ENROLL_DATE DATE DEFAULT SYSDATE,            -- 등록 날짜
+    MODIFIED_DATE DATE DEFAULT SYSDATE,          -- 수정 날짜
+    CATEGORY_ID VARCHAR2(20),                    -- 카테고리 ID (BOARD_CATEGORY 테이블의 외래키)
     STATUS CHAR(1) DEFAULT 'Y' CHECK (STATUS IN ('Y', 'N')),  -- 상태 (활성/비활성)
-    INQUIRY_CATEGORY VARCHAR2(30),            -- 고객 문의 카테고리
-    HOS_ACCOUNT_NO VARCHAR2(10),               -- 병원 계정 번호
+    HOS_ACCOUNT_NO VARCHAR2(10),                 -- 병원 계정 번호
     FOREIGN KEY (USER_NO) REFERENCES MEMBER (USER_NO),         -- 사용자와 연결
     FOREIGN KEY (CATEGORY_ID) REFERENCES BOARD_CATEGORY (CATEGORY_ID),  -- 카테고리와 연결
     FOREIGN KEY (HOS_ACCOUNT_NO) REFERENCES HOSPITAL_ACCOUNT (HOS_ACCOUNT_NO)   -- 병원 연결
-);
-
-
-
-CREATE TABLE FILE_TABLE (
-    FILE_NO VARCHAR2(10) PRIMARY KEY,         -- 파일 고유 번호
-    BOARD_NO VARCHAR2(10) NOT NULL,           -- 연관된 게시글 번호
-    USER_NO VARCHAR2(10),            -- 연관된 사용자 번호
-    ORIGIN_NAME VARCHAR2(255 BYTE),     -- 원본 파일 이름
-    CHANGE_NAME VARCHAR2(255 BYTE),     -- 서버에 저장된 파일 이름
-    HOS_ACCOUNT_NO VARCHAR2(10),
-    CONSTRAINT FK_FILE_BOARD FOREIGN KEY (BOARD_NO)
-        REFERENCES BOARD (BOARD_NO)
-        ON DELETE CASCADE,              -- 게시글 삭제 시 관련 파일 삭제
-    CONSTRAINT FK_FILE_MEMBER FOREIGN KEY (USER_NO)
-        REFERENCES MEMBER (USER_NO),     -- 사용자 삭제 시 연관된 파일 삭제 가능
-    CONSTRAINT FK_FILE_HOSPITAL_ACCOUNT FOREIGN KEY (HOS_ACCOUNT_NO)
-        REFERENCES HOSPITAL_ACCOUNT (HOS_ACCOUNT_NO)
-);
-
-CREATE TABLE COMMENTS (
-    COMMENT_NO VARCHAR2(10) PRIMARY KEY,             -- 댓글 고유 번호
-    BOARD_NO VARCHAR2(10) NOT NULL,                 -- 게시글 고유 번호
-    USER_NO VARCHAR2(10) NOT NULL,                  -- 사용자 고유 번호
-    CONTENT VARCHAR2(2000),                         -- 댓글 내용
-    CREATED_AT DATE DEFAULT SYSDATE,                -- 작성일
-    LIKE_COUNT NUMBER DEFAULT 0,                    -- 좋아요 수
-    DISLIKE_COUNT NUMBER DEFAULT 0,                 -- 싫어요 수
-    FOREIGN KEY (BOARD_NO) REFERENCES BOARD (BOARD_NO),  -- 게시판 참조키
-    FOREIGN KEY (USER_NO) REFERENCES MEMBER (USER_NO)   -- 사용자 참조키
-
-    ); 
-CREATE TABLE MED_ANSWERS (
-    ANSWER_NO VARCHAR2(10) PRIMARY KEY,      -- 답글 고유 ID
-    BOARD_NO VARCHAR2(10) NOT NULL,          -- 원본 게시글 번호 (외래키)
-    MED_NO VARCHAR2(10) NOT NULL,            -- 답글 작성자 (USER_NO) -> 의사 고유 ID
-    ANSWER_CONTENT VARCHAR2(4000) NOT NULL,  -- 답글 내용
-    ENROLL_DATE DATE DEFAULT SYSDATE,        -- 답글 작성일
-    MODIFIED_DATE DATE,                      -- 답글 수정일
-    STATUS CHAR(1) DEFAULT 'Y' CHECK (STATUS IN ('Y', 'N')),  -- 답글 상태
-    IS_MEDICAL_FIELD CHAR(1) DEFAULT 'N' CHECK (IS_MEDICAL_FIELD IN ('Y', 'N')),  -- 의료 전문가 여부
-    FOREIGN KEY (BOARD_NO) REFERENCES BOARD (BOARD_NO) ON DELETE CASCADE, -- 게시글 삭제 시 관련 답글 삭제
-    FOREIGN KEY (MED_NO) REFERENCES MEMBER (MED_KEY)  -- 의사 고유 ID가 MEMBER 테이블의 MED_KEY를 참조
 );
 
 CREATE TABLE INQUIRY (
     INQUIRY_NO VARCHAR2(10) PRIMARY KEY,           -- 문의 고유 번호
     USER_NO VARCHAR2(10) NOT NULL,                -- 사용자 번호
     CATEGORY_ID VARCHAR2(10) NOT NULL,            -- 카테고리 ID
-    SUBCATEGORY_ID VARCHAR2(10),                  -- 하위 카테고리 ID
+    SUB_CATEGORY_ID VARCHAR2(10),                 -- 하위 카테고리 ID
     INQUIRY_TITLE VARCHAR2(200) NOT NULL,         -- 문의 제목
     INQUIRY_CONTENT VARCHAR2(4000) NOT NULL,      -- 문의 내용
+    INQUIRY_VIEWS NUMBER(10) DEFAULT '0', 
     ADMIN_REPLY VARCHAR2(4000),                   -- 관리자 답변
     STATUS CHAR(1) DEFAULT 'Y' NOT NULL CHECK (STATUS IN ('Y', 'N')), -- 상태 (Y: 활성, N: 비활성)
     ENROLL_DATE DATE DEFAULT SYSDATE,             -- 생성 날짜
     UPDATE_DATE DATE DEFAULT SYSDATE,             -- 수정 날짜
-    INQUIRY_VIEWS NUMBER(10) DEFAULT '0',         -- 조회수 (기본값: 0)
     FOREIGN KEY (USER_NO) REFERENCES MEMBER (USER_NO),     -- 사용자 참조 키
     FOREIGN KEY (CATEGORY_ID) REFERENCES BOARD_CATEGORY (CATEGORY_ID), -- 카테고리 참조 키
-    FOREIGN KEY (SUBCATEGORY_ID) REFERENCES SUBCATEGORY (SUBCATEGORY_ID) -- 하위 카테고리 참조 키
+    FOREIGN KEY (SUB_CATEGORY_ID) REFERENCES SUB_CATEGORY (SUB_CATEGORY_ID) -- 하위 카테고리 참조 키
 );
 
 
+CREATE TABLE FILE_TABLE (
+    FILE_NO VARCHAR2(10) NOT NULL,             -- 파일 번호
+    FILE_SIZE NUMBER NOT NULL,                 -- 파일 크기
+    USER_NO VARCHAR2(10) NOT NULL,             -- 사용자 고유 번호
+    ORIGIN_NAME VARCHAR2(100) NOT NULL,        -- 원래 파일명
+    CHANGE_NAME VARCHAR2(100) NOT NULL,        -- 바뀐 파일명
+    ALLOW_DOWNLOAD CHAR(1) DEFAULT 'Y' NOT NULL, -- 다운로드 허용 여부
+    REF_NO VARCHAR2(20) NOT NULL,           -- 참조 게시글 번호 (COMMUNITY_NO 또는 INQUIRY_NO)
+    BOARD_TYPE VARCHAR2(20) NOT NULL,       -- 게시판 타입 (COMMUNITY, INQUIRY)
+    PRIMARY KEY (FILE_NO)                     -- 파일 번호를 기본 키로 설정
+);
+
+CREATE TABLE COMMENTS (
+    COMMENT_NO VARCHAR2(20) NOT NULL,       -- 댓글 번호
+    USER_NO VARCHAR2(10) NOT NULL,          -- 사용자 번호
+    COMMENT_CONTENT VARCHAR2(1500) NOT NULL, -- 댓글 내용
+    ENROLL_DATE DATE DEFAULT SYSDATE,       -- 작성 날짜
+    LIKE_COUNT NUMBER DEFAULT 0,            -- 좋아요 개수
+    DISLIKE_COUNT NUMBER DEFAULT 0,         -- 싫어요 개수
+    REF_NO VARCHAR2(20) NOT NULL,           -- 참조 게시글 번호 (COMMUNITY_NO 또는 INQUIRY_NO)
+    BOARD_TYPE VARCHAR2(20) NOT NULL,       -- 게시판 타입 (COMMUNITY, INQUIRY)
+    PRIMARY KEY (COMMENT_NO)
+);
 
 
-
+CREATE TABLE LIKES (
+    COMMENT_NO VARCHAR2(20) NOT NULL,
+    USER_NO VARCHAR2(10) NOT NULL,
+    ENROLL_DATE DATE DEFAULT SYSDATE,
+    IS_LIKED NUMBER(1) CHECK (IS_LIKED IN (0, 1)),
+    BOARD_TYPE VARCHAR2(20),   -- 게시판 타입 (COMMUNITY, INQUIRY)
+    PRIMARY KEY (COMMENT_NO, USER_NO),
+    FOREIGN KEY (COMMENT_NO) REFERENCES COMMENTS (COMMENT_NO),
+    FOREIGN KEY (USER_NO) REFERENCES MEMBER (USER_NO)
+);
+ 
+CREATE TABLE MED_ANSWERS (
+    ANSWER_NO VARCHAR2(10) PRIMARY KEY,      -- 답글 고유 ID
+    COMMUNITY_NO VARCHAR2(10) NOT NULL,          -- 원본 게시글 번호 (외래키)
+    MED_NO VARCHAR2(10) NOT NULL,            -- 답글 작성자 (USER_NO) -> 의사 고유 ID
+    ANSWER_CONTENT VARCHAR2(4000) NOT NULL,  -- 답글 내용
+    ENROLL_DATE DATE DEFAULT SYSDATE,        -- 답글 작성일
+    MODIFIED_DATE DATE,                      -- 답글 수정일
+    STATUS CHAR(1) DEFAULT 'Y' CHECK (STATUS IN ('Y', 'N')),  -- 답글 상태
+    IS_MEDICAL_FIELD CHAR(1) DEFAULT 'N' CHECK (IS_MEDICAL_FIELD IN ('Y', 'N')),  -- 의료 전문가 여부
+    FOREIGN KEY (COMMUNITY_NO) REFERENCES COMMUNITY (COMMUNITY_NO) ON DELETE CASCADE, -- 게시글 삭제 시 관련 답글 삭제
+    FOREIGN KEY (MED_NO) REFERENCES MEMBER (MED_KEY)  -- 의사 고유 ID가 MEMBER 테이블의 MED_KEY를 참조
+);
 
 CREATE TABLE H_SUBJECT (
     SUB_KEY NUMBER PRIMARY KEY,
@@ -306,20 +304,6 @@ CREATE TABLE H_SUBJECT (
     SUBJECT_CODE VARCHAR2(50),
     FOREIGN KEY (HOS_NO) REFERENCES HOSPITAL_INFO (HOS_NO)
 );
-
-CREATE TABLE LIKES_TABLE (
-    COMMENT_NO VARCHAR2(10) NOT NULL,                -- 댓글 고유 번호
-    USER_NO VARCHAR2(10) NOT NULL,                  -- 사용자 고유 번호
-    ENROLL_DATE DATE DEFAULT SYSDATE,               -- 좋아요/싫어요 등록일
-    IS_LIKED NUMBER(1) CHECK (IS_LIKED IN (0, 1)),  -- 좋아요(1), 싫어요(0), NULL(누르지 않음)
-    PRIMARY KEY (COMMENT_NO, USER_NO),              -- 복합 기본 키
-    FOREIGN KEY (COMMENT_NO) REFERENCES COMMENTS (COMMENT_NO), -- 댓글 참조키
-    FOREIGN KEY (USER_NO) REFERENCES MEMBER (USER_NO)          -- 사용자 참조키
-);
-
-
-ALTER TABLE FILE_TABLE ADD ALLOW_DOWNLOAD CHAR(1); -- Y: 허용, N: 비허용
-ALTER TABLE FILE_TABLE ADD file_size NUMBER;
 
 CREATE TABLE RANKUP (
     SEQ_NO VARCHAR2(10) PRIMARY KEY,           -- 기본 키
@@ -412,11 +396,19 @@ END;
 
 
 
-CREATE OR REPLACE TRIGGER trg_board_id
-BEFORE INSERT ON BOARD
+CREATE OR REPLACE TRIGGER trg_communtiy_id
+BEFORE INSERT ON COMMUNITY
 FOR EACH ROW
 BEGIN
-    :NEW.BOARD_NO := 'B' || TO_CHAR(SEQ_BOARD_NO.NEXTVAL);
+    :NEW.COMMUNITY_NO := 'B' || TO_CHAR(SEQ_COMMUNITY_NO.NEXTVAL);
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_inquiry_id
+BEFORE INSERT ON INQUIRY
+FOR EACH ROW
+BEGIN
+    :NEW.INQUIRY_NO := 'B' || TO_CHAR(SEQ_INQUIRY_NO.NEXTVAL);
 END;
 /
 
@@ -10559,48 +10551,10 @@ INSERT INTO MEMBER (USER_NO, USER_ID, USER_PWD, USER_NAME, EMAIL, PHONE, BIRTHDA
 VALUES ('U1025', 'doc25', 'password25', '백지원', 'doc25@example.com', '010-5555-1818', '801212', 'F', '충청남도 공주시', 'M16', 'H8', '/resources/img/doctorPicDefault.png', '정신건강의학과 전문의로 우울증 및 불안 치료를 전문으로 합니다.');
 
 INSERT INTO MEMBER (USER_NO, USER_ID, USER_PWD, USER_NAME, EMAIL, PHONE, BIRTHDAY, GENDER, ADDRESS, MED_KEY, HOS_NO, USERPROFILE, BIOGRAPHY)
-VALUES ('U1026', 'doc26', 'password26', '조승연', 'doc26@example.com', '010-6666-1919', '801212', 'M', '경상북도 포항시', 'M17', 'H9', '/resources/img/doctorPicDefault.png', '조승연<br>
-소아청소년과 전문의 (강남세브란스병원)<br>
-진료분야:<br>
-소아청소년 신경질환 (뇌전증, 두통, 근육병, 중추신경계 감염성 질환, 신경계 중환자질환, 발달지연, 유전대사질환, 희귀신경근육계질환)<br>
-학력:<br>
-부산대학교 의학과 학사 (2010)<br>
-연세대학교 대학원 의학박사 (2019)<br>
-경력:<br>
-2021~현재: 연세대학교 의과대학 소아과학교실 임상조교수<br>
-2020~2021: 이화여자대학교 의과대학 소아청소년과 임상조교수<br>
-2019~2020: 연세대학교 세브란스병원 소아신경과 임상연구조교수<br>
-2015~2018: 공중보건의 복무<br>
-수상 및 학술활동:<br>
-대한유전성대사질환학회 젊은 의학자상 (2023)<br>
-대한소아신경학회 최우수논문상 (2023)<br>
-대한소아응급의학회 평생회원 등<br>');
+VALUES ('U1026', 'doc26', 'password26', '조승연', 'doc26@example.com', '010-6666-1919', '801212', 'M', '경상북도 포항시', 'M17', 'H9', '/resources/img/doctorPicDefault.png', '산부인과 전문의로 여성 건강 및 출산을 지원합니다.');
 
 INSERT INTO MEMBER (USER_NO, USER_ID, USER_PWD, USER_NAME, EMAIL, PHONE, BIRTHDAY, GENDER, ADDRESS, MED_KEY, HOS_NO, USERPROFILE, BIOGRAPHY)
-VALUES ('U1027', 'doc27', 'password27', '황수진', 'doc27@example.com', '010-7777-1919', '801212', 'F', '경상북도 경주시', 'M18', 'H9', '/resources/img/doctorPicDefault.png', '황수진 소아청소년과 전문의 약력<br>
-개인 정보<br>
-이름: 황수진<br>
-생년월일: 1985년 3월 15일<br>
-성별: 여성<br>
-학력<br>
-2003-2009: 서울대학교 의과대학 의학사 졸업<br>
-2014-2016: 연세대학교 대학원 소아청소년과학 석사 과정 수료<br>
-전문의 자격<br>
-2012년: 소아청소년과 전문의 취득<br>
-2015년: 소아내분비 세부전문의 자격<br>
-주요 경력<br>
-2009-2012: 서울대학교병원 수련의<br>
-2012-2015: 서울대학교병원 소아청소년과 전임의<br>
-2015-현재: 서울아산병원 소아내분비 클리닉 주임교수<br>
-연구 및 학술 활동<br>
-소아 당뇨병, 성장 호르몬 분야 SCI 논문 30여편 발표<br>
-대한소아내분비학회 이사<br>
-국제 소아당뇨병 학회 정회원<br>
-주요 진료 분야<br>
-소아 당뇨병<br>
-성장 및 내분비 질환<br>
-소아 비만<br>
-유전성 내분비 질환<br>');
+VALUES ('U1027', 'doc27', 'password27', '황수진', 'doc27@example.com', '010-7777-1919', '801212', 'F', '경상북도 경주시', 'M18', 'H9', '/resources/img/doctorPicDefault.png', '소아과 전문의로 아동 건강 진료를 전문으로 합니다.');
 
 INSERT INTO MEMBER (USER_NO, USER_ID, USER_PWD, USER_NAME, EMAIL, PHONE, BIRTHDAY, GENDER, ADDRESS, MED_KEY, HOS_NO, USERPROFILE, BIOGRAPHY)
 VALUES ('U1028', 'doc28', 'password28', '정성훈', 'doc28@example.com', '010-8888-2020', '801212', 'M', '경상남도 창원시', 'M19', 'H10', '/resources/img/doctorPicDefault.png', '비뇨기과 전문의로 최신 치료 기술을 제공합니다.');
@@ -10891,101 +10845,65 @@ VALUES ('CAT06', 'FAQ', 6, 'Y');
 INSERT INTO BOARD_CATEGORY (CATEGORY_ID, CATEGORY_NAME, SORT_ORDER, IS_ACTIVE)
 VALUES ('CAT07', 'Q&A', 7, 'Y');
 
--- SUBCATEGORY 테이블 더미 데이터 생성
-INSERT INTO SUBCATEGORY (SUBCATEGORY_ID, CATEGORY_ID, SUBCATEGORY_NAME, SORT_ORDER, IS_ACTIVE) 
+-- SUB_CATEGORY 테이블 더미 데이터 생성
+INSERT INTO SUB_CATEGORY (SUB_CATEGORY_ID, CATEGORY_ID, SUB_CATEGORY_NAME, SORT_ORDER, IS_ACTIVE) 
 VALUES ('SC001', 'CAT06', '회원/정보관리', 1, 'Y');
 
-INSERT INTO SUBCATEGORY (SUBCATEGORY_ID, CATEGORY_ID, SUBCATEGORY_NAME, SORT_ORDER, IS_ACTIVE) 
+INSERT INTO SUB_CATEGORY (SUB_CATEGORY_ID, CATEGORY_ID, SUB_CATEGORY_NAME, SORT_ORDER, IS_ACTIVE) 
 VALUES ('SC002', 'CAT06', '사이트이용', 2, 'Y');
 
-INSERT INTO SUBCATEGORY (SUBCATEGORY_ID, CATEGORY_ID, SUBCATEGORY_NAME, SORT_ORDER, IS_ACTIVE) 
+INSERT INTO SUB_CATEGORY (SUB_CATEGORY_ID, CATEGORY_ID, SUB_CATEGORY_NAME, SORT_ORDER, IS_ACTIVE) 
 VALUES ('SC003', 'CAT06', '커뮤니티', 3, 'Y');
 
-INSERT INTO SUBCATEGORY (SUBCATEGORY_ID, CATEGORY_ID, SUBCATEGORY_NAME, SORT_ORDER, IS_ACTIVE) 
+INSERT INTO SUB_CATEGORY (SUB_CATEGORY_ID, CATEGORY_ID, SUB_CATEGORY_NAME, SORT_ORDER, IS_ACTIVE) 
 VALUES ('SC004', 'CAT06', '이벤트', 4, 'Y');
 
-INSERT INTO SUBCATEGORY (SUBCATEGORY_ID, CATEGORY_ID, SUBCATEGORY_NAME, SORT_ORDER, IS_ACTIVE) 
+INSERT INTO SUB_CATEGORY (SUB_CATEGORY_ID, CATEGORY_ID, SUB_CATEGORY_NAME, SORT_ORDER, IS_ACTIVE) 
 VALUES ('SC005', 'CAT06', '예약', 5, 'Y');
 
--- BOARD 더미데이터--
 
+SELECT * FROM BOARD_CATEGORY WHERE CATEGORY_ID = 'CAT06';
+
+SELECT * FROM SUB_CATEGORY WHERE CATEGORY_ID = 'CAT06';
+
+-- 자유게시판 더미 데이터 -----------------------------------------------------------------------------------------------------
 DECLARE
-    -- 외부 변수 선언
-    CURSOR c_user_no IS
-        SELECT USER_NO FROM MEMBER WHERE ISADMIN = 'N';
     v_user_no MEMBER.USER_NO%TYPE;
-
     v_title VARCHAR2(200);
     v_content CLOB;
-    v_category_id VARCHAR2(20);
+    v_category_id VARCHAR2(20) := 'CAT01'; -- 자유게시판 (CAT01)
     v_full_content CLOB;
     v_image_url VARCHAR2(255);
 
-    -- 데이터 리스트
-    v_free_titles SYS.DBMS_DEBUG_VC2COLL := SYS.DBMS_DEBUG_VC2COLL(
-        '오늘 하루는 어땠나요?', '좋은 영화 추천 부탁드려요', '취미생활 공유해요!',
-        '요즘 읽고 있는 책은?', '여행 가고 싶은 곳이 있나요?'
+    v_board_titles SYS.DBMS_DEBUG_VC2COLL := SYS.DBMS_DEBUG_VC2COLL(
+        '자유롭게 이야기해요!', '오늘의 날씨는 어때요?', '최근 본 영화 리뷰', 
+        '여행지 추천 부탁드립니다!', '여러분의 취미는 무엇인가요?'
     );
-    v_free_contents SYS.DBMS_DEBUG_VC2COLL := SYS.DBMS_DEBUG_VC2COLL(
-        '오늘 하루 있었던 일들을 공유하고 싶습니다. 모두 어떤 하루를 보냈나요?',
-        '최근에 볼만한 영화가 없어서요. 재미있는 영화 추천 부탁드립니다!',
-        '취미생활을 공유하며 즐거움을 나누고 싶어요. 여러분의 취미는 무엇인가요?',
-        '요즘 제가 읽고 있는 책은 정말 재밌습니다. 여러분은 어떤 책을 읽고 있나요?',
-        '여행을 계획 중인데 추천해주실 여행지가 있을까요?'
-    );
-
-    v_meditalk_titles SYS.DBMS_DEBUG_VC2COLL := SYS.DBMS_DEBUG_VC2COLL(
-        '감기 예방 방법은?', '백신 접종 후 주의사항', '건강검진에서 간 수치가 높아요',
-        '무릎 통증 치료법', '치아 건강 유지 방법'
-    );
-    v_meditalk_contents SYS.DBMS_DEBUG_VC2COLL := SYS.DBMS_DEBUG_VC2COLL(
-        '최근 감기가 유행인데 예방할 수 있는 방법이 있을까요?',
-        '백신을 맞고 나서 주의해야 할 점이 있다면 알려주세요.',
-        '건강검진에서 간 수치가 높게 나왔습니다. 어떻게 해야 할까요?',
-        '무릎 통증이 자주 생기는데 어떤 치료법이 효과적일까요?',
-        '치아 건강을 유지하기 위해 좋은 방법이 있을까요?'
-    );
-
-    v_event_titles SYS.DBMS_DEBUG_VC2COLL := SYS.DBMS_DEBUG_VC2COLL(
-        '새해 이벤트 참여하세요!', '건강검진 할인 행사 안내', '무료 백신 접종 이벤트',
-        '여름맞이 체력 증진 이벤트', '커뮤니티 활동 이벤트 공지'
-    );
-    v_event_contents SYS.DBMS_DEBUG_VC2COLL := SYS.DBMS_DEBUG_VC2COLL(
-        '새해를 맞아 다양한 이벤트를 준비했습니다. 참여 방법은 본문을 확인해주세요!',
-        '이번 달 동안 건강검진 할인 행사가 진행됩니다. 많은 참여 부탁드립니다.',
-        '무료 백신 접종 이벤트가 열립니다. 자세한 내용은 본문을 확인해주세요.',
-        '여름맞이 체력 증진 이벤트가 시작됩니다. 자세한 정보는 본문 참고!',
-        '커뮤니티 활성화를 위해 특별한 이벤트를 준비했습니다. 많은 관심 부탁드립니다!'
+    v_board_contents SYS.DBMS_DEBUG_VC2COLL := SYS.DBMS_DEBUG_VC2COLL(
+        '오늘 날씨가 너무 좋네요. 여러분은 어떻게 보내셨나요?',
+        '최근에 본 영화에 대해 이야기해볼까요? 어떤 영화가 좋았나요?',
+        '여행을 계획 중인데 추천해줄 곳이 있나요?',
+        '여러분은 어떤 취미를 가지고 있나요? 공유해 주세요!',
+        '최근에 읽은 책에 대해 이야기해보고 싶어요.'
     );
 
     v_additional_sentences SYS.DBMS_DEBUG_VC2COLL := SYS.DBMS_DEBUG_VC2COLL(
-        '이와 관련된 경험을 공유해주세요.', '더 많은 정보는 댓글로 알려주세요.',
-        '다양한 의견을 듣고 싶습니다.', '앞으로도 이런 게시글을 작성하겠습니다.',
-        '관련 이미지도 첨부해봤습니다.'
+        '댓글로 다양한 의견을 들려주세요.', '이 주제에 대해 더 많은 얘기를 나누고 싶어요.',
+        '여러분의 경험도 공유해보세요.', '이 글에 관련된 경험을 이야기해 주세요.',
+        '이 주제에 대해 더 알고 싶어요.'
     );
+
 BEGIN
-    FOR i IN 1..300 LOOP
+    FOR i IN 1..100 LOOP
         -- 랜덤 USER_NO 가져오기
         SELECT USER_NO INTO v_user_no
         FROM (
             SELECT USER_NO FROM MEMBER WHERE ISADMIN = 'N' ORDER BY DBMS_RANDOM.VALUE
         ) WHERE ROWNUM = 1;
 
-        -- 게시판 유형 설정
-        CASE MOD(i, 3)
-            WHEN 0 THEN
-                v_title := v_free_titles(TRUNC(DBMS_RANDOM.VALUE(1, v_free_titles.COUNT + 1)));
-                v_content := v_free_contents(TRUNC(DBMS_RANDOM.VALUE(1, v_free_contents.COUNT + 1)));
-                v_category_id := 'CAT01';
-            WHEN 1 THEN
-                v_title := v_meditalk_titles(TRUNC(DBMS_RANDOM.VALUE(1, v_meditalk_titles.COUNT + 1)));
-                v_content := v_meditalk_contents(TRUNC(DBMS_RANDOM.VALUE(1, v_meditalk_contents.COUNT + 1)));
-                v_category_id := 'CAT02';
-            ELSE
-                v_title := v_event_titles(TRUNC(DBMS_RANDOM.VALUE(1, v_event_titles.COUNT + 1)));
-                v_content := v_event_contents(TRUNC(DBMS_RANDOM.VALUE(1, v_event_contents.COUNT + 1)));
-                v_category_id := 'CAT03';
-        END CASE;
+        -- 제목과 내용 설정
+        v_title := v_board_titles(TRUNC(DBMS_RANDOM.VALUE(1, v_board_titles.COUNT + 1)));
+        v_content := v_board_contents(TRUNC(DBMS_RANDOM.VALUE(1, v_board_contents.COUNT + 1)));
 
         -- 추가 문장 및 이미지 설정
         v_full_content := v_content;
@@ -10999,12 +10917,11 @@ BEGIN
         END IF;
 
         -- 데이터 삽입
-        INSERT INTO BOARD (
-            BOARD_NO, BOARD_TYPE, USER_NO, BOARD_TITLE, BOARD_CONTENT, 
-            ENROLL_DATE, MODIFIED_DATE, BOARD_VIEWS, CATEGORY_ID, STATUS
+        INSERT INTO COMMUNITY (
+            COMMUNITY_NO, USER_NO, COMMUNITY_TITLE, COMMUNITY_CONTENT, 
+            ENROLL_DATE, MODIFIED_DATE, COMMUNITY_VIEWS, CATEGORY_ID, STATUS
         ) VALUES (
-            'B' || TO_CHAR(SEQ_BOARD_NO.NEXTVAL),
-            MOD(i, 3) + 1,
+            'C' || TO_CHAR(SEQ_COMMUNITY_NO.NEXTVAL),
             v_user_no,
             v_title,
             v_full_content,
@@ -11019,15 +10936,85 @@ BEGIN
     COMMIT;
 END;
 
+
+/
+-- 이벤트게시판 더미 데이터 -----------------------------------------------------------------------------------------------------
+DECLARE
+    v_user_no MEMBER.USER_NO%TYPE;
+    v_title VARCHAR2(200);
+    v_content CLOB;
+    v_category_id VARCHAR2(20) := 'CAT03'; -- 이벤트게시판 (CAT03)
+    v_full_content CLOB;
+    v_image_url VARCHAR2(255);
+
+    v_event_titles SYS.DBMS_DEBUG_VC2COLL := SYS.DBMS_DEBUG_VC2COLL(
+        '이벤트 참여 방법 안내', '여러분을 초대합니다!', '새로운 프로모션 소식', 
+        '이번 주말 특별 이벤트', '참여하면 상품을 드려요!'
+    );
+    v_event_contents SYS.DBMS_DEBUG_VC2COLL := SYS.DBMS_DEBUG_VC2COLL(
+        '이번 이벤트에 참여하는 방법을 알아보세요!',
+        '여러분을 초대합니다. 참여해 주세요!',
+        '새로운 프로모션 소식입니다. 놓치지 마세요.',
+        '이번 주말에 있을 특별 이벤트 소식을 전해드립니다.',
+        '참여하면 상품을 드려요! 참여 방법은 아래와 같습니다.'
+    );
+
+    v_additional_sentences SYS.DBMS_DEBUG_VC2COLL := SYS.DBMS_DEBUG_VC2COLL(
+        '이벤트에 대한 다양한 질문을 댓글로 남겨주세요.',
+        '많은 참여 부탁드립니다!', '상품이 증정되는 이 기회를 놓치지 마세요.',
+        '이벤트와 관련된 사진도 첨부해봅니다.'
+    );
+
+BEGIN
+    FOR i IN 1..100 LOOP
+        -- 랜덤 USER_NO 가져오기
+        SELECT USER_NO INTO v_user_no
+        FROM (
+            SELECT USER_NO FROM MEMBER WHERE ISADMIN = 'N' ORDER BY DBMS_RANDOM.VALUE
+        ) WHERE ROWNUM = 1;
+
+        -- 제목과 내용 설정
+        v_title := v_event_titles(TRUNC(DBMS_RANDOM.VALUE(1, v_event_titles.COUNT + 1)));
+        v_content := v_event_contents(TRUNC(DBMS_RANDOM.VALUE(1, v_event_contents.COUNT + 1)));
+
+        -- 추가 문장 및 이미지 설정
+        v_full_content := v_content;
+        FOR j IN 1..TRUNC(DBMS_RANDOM.VALUE(0, 6)) LOOP
+            v_full_content := v_full_content || ' ' || v_additional_sentences(TRUNC(DBMS_RANDOM.VALUE(1, v_additional_sentences.COUNT + 1)));
+        END LOOP;
+
+        IF DBMS_RANDOM.VALUE(0, 1) < 0.3 THEN
+            v_image_url := 'https://dummyimage.com/600x400/' || LPAD(TO_CHAR(TRUNC(DBMS_RANDOM.VALUE(111111, 999999))), 6, '0') || '/fff.png';
+            v_full_content := v_full_content || ' [이미지 첨부: ' || v_image_url || ']';
+        END IF;
+
+        -- 데이터 삽입
+        INSERT INTO COMMUNITY (
+            COMMUNITY_NO, USER_NO, COMMUNITY_TITLE, COMMUNITY_CONTENT, 
+            ENROLL_DATE, MODIFIED_DATE, COMMUNITY_VIEWS, CATEGORY_ID, STATUS
+        ) VALUES (
+            'C' || TO_CHAR(SEQ_COMMUNITY_NO.NEXTVAL),
+            v_user_no,
+            v_title,
+            v_full_content,
+            SYSDATE - TRUNC(DBMS_RANDOM.VALUE(0, 30)),
+            SYSDATE - TRUNC(DBMS_RANDOM.VALUE(0, 10)),
+            TRUNC(DBMS_RANDOM.VALUE(0, 1000)),
+            v_category_id,
+            'Y'
+        );
+    END LOOP;
+
+    COMMIT;
+END;
 /
 -- 메디톡 답글 더미데이터--
-
 DECLARE
-    -- 메디톡 게시글 번호와 카테고리 ID를 가져올 커서
+    -- 커뮤니티 게시글 번호와 카테고리 ID를 가져올 커서
     CURSOR c_meditalk_boards IS
-        SELECT BOARD_NO 
-        FROM BOARD 
-        WHERE CATEGORY_ID = 'CAT02';
+        SELECT COMMUNITY_NO 
+        FROM COMMUNITY 
+        WHERE CATEGORY_ID = 'CAT02'; -- BOARD_CATEGORY의 CATEGORY_ID를 기준으로 게시글 조회
 
     -- 의사 목록을 가져올 커서
     CURSOR c_doctors IS
@@ -11036,7 +11023,7 @@ DECLARE
         WHERE MED_KEY IS NOT NULL; -- MED_KEY가 있는 사용자만 의사
 
     -- 변수 선언
-    v_board_no BOARD.BOARD_NO%TYPE; -- 메디톡 게시글 번호
+    v_community_no COMMUNITY.COMMUNITY_NO%TYPE; -- 커뮤니티 게시글 번호
     v_doctor_id MEMBER.MED_KEY%TYPE; -- 의사 MED_KEY
     v_answer_content VARCHAR2(4000);
     v_is_image_attached CHAR(1);
@@ -11059,9 +11046,10 @@ DECLARE
         '치아 건강 유지를 위해 올바른 칫솔질과 치실 사용은 필수입니다. 치과를 정기적으로 방문하여 검진받고, 플라크를 제거하세요. 특히 설탕이 많은 음식을 줄이는 것도 도움이 됩니다.'
     );
 BEGIN
-    -- 메디톡 게시글 반복 처리
-    FOR board_rec IN c_meditalk_boards LOOP
-        v_board_no := board_rec.BOARD_NO;
+    -- 커뮤니티 게시글 반복 처리
+    FOR community_rec IN c_meditalk_boards LOOP
+        -- 커서에서 읽은 COMMUNITY_NO를 변수에 저장
+        v_community_no := community_rec.COMMUNITY_NO;
 
         -- 각 게시글에 대해 1~5개의 답글 생성
         FOR i IN 1..TRUNC(DBMS_RANDOM.VALUE(1, 6)) LOOP
@@ -11095,7 +11083,7 @@ BEGIN
             -- 답글 데이터 삽입
             INSERT INTO MED_ANSWERS (
                 ANSWER_NO, 
-                BOARD_NO, 
+                COMMUNITY_NO, 
                 MED_NO, 
                 ANSWER_CONTENT, 
                 ENROLL_DATE, 
@@ -11104,13 +11092,13 @@ BEGIN
                 IS_MEDICAL_FIELD
             ) VALUES (
                 'A' || TO_CHAR(SEQ_ANSWER_NO.NEXTVAL), -- ANSWER_NO
-                v_board_no,                           -- 게시글 번호
-                v_doctor_id,                          -- 의사 ID
-                v_answer_content,                     -- 답글 내용
+                v_community_no,                        -- 커뮤니티 게시글 번호
+                v_doctor_id,                           -- 의사 ID
+                v_answer_content,                      -- 답글 내용
                 SYSDATE - TRUNC(DBMS_RANDOM.VALUE(0, 30)), -- 등록 날짜 (30일 내 랜덤)
-                NULL,                                 -- 수정 날짜 (초기 NULL)
-                'Y',                                  -- STATUS (활성화)
-                'Y'                                   -- IS_MEDICAL_FIELD (의료 전문가 여부)
+                NULL,                                  -- 수정 날짜 (초기 NULL)
+                'Y',                                   -- STATUS (활성화)
+                'Y'                                    -- IS_MEDICAL_FIELD (의료 전문가 여부)
             );
         END LOOP;
     END LOOP;
@@ -11197,7 +11185,7 @@ DECLARE
     v_inquiry_no VARCHAR2(10);
     v_user_no VARCHAR2(10);
     v_category_id VARCHAR2(10) := 'CAT06'; -- FAQ 카테고리
-    v_subcategory_id VARCHAR2(10);
+    v_sub_category_id VARCHAR2(10);
     v_inquiry_title VARCHAR2(200);
     v_inquiry_content CLOB;
     v_admin_reply VARCHAR2(4000);
@@ -11241,7 +11229,7 @@ BEGIN
         -- 제목과 내용 랜덤 선택
         v_inquiry_title := v_faq_titles(TRUNC(DBMS_RANDOM.VALUE(1, v_faq_titles.COUNT + 1)));
         v_inquiry_content := v_faq_contents(TRUNC(DBMS_RANDOM.VALUE(1, v_faq_contents.COUNT + 1)));
-        v_subcategory_id := v_faq_subcategories(TRUNC(DBMS_RANDOM.VALUE(1, v_faq_subcategories.COUNT + 1)));
+        v_sub_category_id := v_faq_subcategories(TRUNC(DBMS_RANDOM.VALUE(1, v_faq_subcategories.COUNT + 1)));
 
         -- 랜덤 데이터 생성
         v_admin_reply := NULL;
@@ -11252,11 +11240,11 @@ BEGIN
 
         -- FAQ 데이터 삽입
         INSERT INTO INQUIRY (
-            INQUIRY_NO, USER_NO, CATEGORY_ID, SUBCATEGORY_ID, INQUIRY_TITLE, 
+            INQUIRY_NO, USER_NO, CATEGORY_ID, SUB_CATEGORY_ID, INQUIRY_TITLE, 
             INQUIRY_CONTENT, ADMIN_REPLY, STATUS, ENROLL_DATE, 
             UPDATE_DATE, INQUIRY_VIEWS
         ) VALUES (
-            v_inquiry_no, v_user_no, v_category_id, v_subcategory_id, v_inquiry_title,
+            v_inquiry_no, v_user_no, v_category_id, v_sub_category_id, v_inquiry_title,
             v_inquiry_content, v_admin_reply, v_status, v_enroll_date,
             v_update_date, v_inquiry_views
         );
@@ -11360,4 +11348,3 @@ END;
 
 --커밋--------------------------------------------------------------------------------------------------------
 COMMIT;
-
